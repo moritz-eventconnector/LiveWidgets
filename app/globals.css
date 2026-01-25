@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-obs-black text-white antialiased;
+}
+
+a {
+  @apply text-obs-accent;
+}
