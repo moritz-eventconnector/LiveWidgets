@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STREAMER
+  MOD
+}
+
+enum BonusHuntStatus {
+  PENDING
+  OPENED
+  FINISHED
+}
+
+enum SlotRequestStatus {
+  QUEUED
+  PICKED
+  PLAYED
+}
+
+enum SubscriptionPlan {
+  CREATOR
+  CREATOR_PLUS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String?  @unique
+  passwordHash   String?
+  twitchUserId   String?  @unique
+  twitchLogin    String?
+  role           UserRole @default(STREAMER)
+  channels       Channel[] @relation("ChannelOwner")
+  moderatorLinks ModeratorLink[]
+  accounts       Account[]
+  sessions       Session[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Channel {
+  id                     String              @id @default(cuid())
+  slug                   String              @unique
+  ownerUserId            String
+  owner                  User                @relation("ChannelOwner", fields: [ownerUserId], references: [id])
+  twitchBroadcasterId    String              @unique
+  twitchBroadcasterLogin String
+  overlayToken           String
+  subscriptionPlan       SubscriptionPlan    @default(CREATOR)
+  subscriptionStatus     SubscriptionStatus  @default(INACTIVE)
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  adminDisabled          Boolean             @default(false)
+  bonusHunts             BonusHunt[]
+  slotRequests           SlotRequest[]
+  tournaments            Tournament[]
+  moderators             ModeratorLink[]
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+}
+
+model ModeratorLink {
+  id        String   @id @default(cuid())
+  channelId String
+  userId    String
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([channelId, userId])
+}
+
+model BonusHunt {
+  id         String          @id @default(cuid())
+  channelId  String
+  channel    Channel         @relation(fields: [channelId], references: [id])
+  title      String
+  status     BonusHuntStatus @default(PENDING)
+  winAmount  Float?
+  multiplier Float?
+  items      BonusItem[]
+  guesses    Guess[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model BonusItem {
+  id        String   @id @default(cuid())
+  huntId    String
+  hunt      BonusHunt @relation(fields: [huntId], references: [id])
+  slotName  String
+  bet       Float
+  buyCost   Float
+  type      String
+  createdAt DateTime @default(now())
+}
+
+model Guess {
+  id        String   @id @default(cuid())
+  huntId    String
+  hunt      BonusHunt @relation(fields: [huntId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  guess     Float
+  createdAt DateTime @default(now())
+
+  @@unique([huntId, userId])
+}
+
+model SlotRequest {
+  id        String            @id @default(cuid())
+  channelId String
+  channel   Channel           @relation(fields: [channelId], references: [id])
+  slotName  String
+  status    SlotRequestStatus @default(QUEUED)
+  requestedBy String
+  createdAt DateTime          @default(now())
+}
+
+model Tournament {
+  id        String   @id @default(cuid())
+  channelId String
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  title     String
+  size      Int
+  players   TournamentPlayer[]
+  matches   TournamentMatch[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TournamentPlayer {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  displayName  String
+  seed         Int
+  createdAt    DateTime @default(now())
+}
+
+model TournamentMatch {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  round        Int
+  playerA      String?
+  playerB      String?
+  winner       String?
+  createdAt    DateTime @default(now())
+}
+
+model StripeEventLog {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  eventType String
+  payload   String
+  createdAt DateTime @default(now())
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
