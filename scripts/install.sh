@@ -234,6 +234,9 @@ for attempt in {1..30}; do
     if sudo docker compose exec -T app npm run prisma:migrate; then
       migrate_done=true
       break
+    elif sudo docker compose exec -T app npm run prisma:push; then
+      migrate_done=true
+      break
     fi
   fi
   echo "Waiting for app container to be ready (${attempt}/30)..."
