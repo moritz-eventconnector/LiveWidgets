@@ -18,7 +18,7 @@ export default function TwitchPage() {
       <SectionCard title="Commands Overview">
         <ul className="space-y-2 text-sm text-white/70">
           <li>!sr &lt;slot&gt; – Slot Request einreichen</li>
-          <li>!join – Turnier beitreten</li>
+          <li>!join – Join-Link per Whisper erhalten</li>
           <li>!bh lock – Bonus Hunt Guessing schließen</li>
         </ul>
       </SectionCard>

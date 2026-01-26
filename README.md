@@ -36,9 +36,7 @@ Bot Commands:
 - `!sr <slot>` – Slot Request einreichen
 - `!sr pick` – nächsten Slot auswählen (mods/broadcaster)
 - `!sr clear` – Queue leeren (mods/broadcaster)
-- `!ts <title> <size>` – Turnier starten (mods/broadcaster)
-- `!join` – Turnier beitreten
-- `!win <name>` – Winner setzen (mods/broadcaster)
+- `!join` – Join-Link per Whisper erhalten (Slot/Name eintragen)
 
 ## Realtime / OBS Overlays
 - Socket.IO wird unter `/socket` via Traefik geroutet.
