@@ -6,9 +6,38 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-set -a
-. .env
-set +a
+load_env_file() {
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    if [[ -z "$line" || "${line:0:1}" == "#" ]]; then
+      continue
+    fi
+
+    if [[ "$line" == export\ * ]]; then
+      line="${line#export }"
+    fi
+
+    if [[ "$line" != *"="* ]]; then
+      continue
+    fi
+
+    key="${line%%=*}"
+    value="${line#*=}"
+    key="${key%"${key##*[![:space:]]}"}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:-1}"
+    elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+      value="${value:1:-1}"
+    fi
+
+    export "${key}=${value}"
+  done < .env
+}
+
+load_env_file
 
 if [[ -z "${POSTGRES_PASSWORD:-}" ]]; then
   echo "POSTGRES_PASSWORD is not set in .env. Please configure it before updating." >&2
