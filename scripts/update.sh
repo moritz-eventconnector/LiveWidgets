@@ -78,6 +78,11 @@ EOF
   exit 1
 fi
 
-sudo docker compose exec -T app npm run prisma:migrate
+if [[ ! -d prisma/migrations || -z "$(find prisma/migrations -maxdepth 1 -type d -not -path prisma/migrations 2>/dev/null)" ]]; then
+  echo "No prisma migrations found. Running prisma db push..."
+  sudo docker compose exec -T app npm run prisma:push
+else
+  sudo docker compose exec -T app npm run prisma:migrate
+fi
 
 echo "Update complete."
