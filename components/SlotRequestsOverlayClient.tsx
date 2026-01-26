@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
 export default function SlotRequestsOverlayClient({
@@ -9,13 +9,11 @@ export default function SlotRequestsOverlayClient({
   room: string;
 }) {
   const [queue, setQueue] = useState<string[]>([]);
-  const socketUrl = useMemo(
-    () => process.env.NEXT_PUBLIC_SOCKET_URL ?? window.location.origin,
-    []
-  );
+  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
 
   useEffect(() => {
-    const socket = io(socketUrl, { path: '/socket' });
+    const resolvedSocketUrl = socketUrl ?? window.location.origin;
+    const socket = io(resolvedSocketUrl, { path: '/socket' });
     socket.emit('join', room);
     socket.on('slot-requests:update', (payload) => {
       if (payload?.queue) {
