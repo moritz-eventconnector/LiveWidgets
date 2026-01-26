@@ -1,12 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! command -v lsb_release >/dev/null 2>&1; then
-  echo "lsb_release not found. Install it first." >&2
+get_ubuntu_version() {
+  if command -v lsb_release >/dev/null 2>&1; then
+    lsb_release -rs
+    return 0
+  fi
+
+  if [[ -f /etc/os-release ]]; then
+    . /etc/os-release
+    if [[ "${ID:-}" == "ubuntu" && -n "${VERSION_ID:-}" ]]; then
+      echo "${VERSION_ID}"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+if ! ubuntu_version=$(get_ubuntu_version); then
+  echo "Unable to detect Ubuntu version. Install lsb-release or ensure /etc/os-release exists." >&2
   exit 1
 fi
-
-ubuntu_version=$(lsb_release -rs)
 if [[ "$ubuntu_version" != "22.04" && "$ubuntu_version" != "24.04" ]]; then
   echo "Unsupported Ubuntu version: $ubuntu_version" >&2
   exit 1
@@ -21,9 +36,10 @@ if ! command -v docker >/dev/null 2>&1; then
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
   sudo apt-get update
   sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  sudo systemctl enable --now docker
 fi
 
-if ! command -v docker compose >/dev/null 2>&1; then
+if ! docker compose version >/dev/null 2>&1; then
   echo "Docker Compose plugin missing." >&2
   exit 1
 fi
@@ -117,7 +133,24 @@ LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
 ENV
 
 sudo docker compose up -d --build
-sudo docker compose exec app npm run prisma:migrate
-sudo docker compose exec app npm run seed
+
+migrate_done=false
+for attempt in {1..30}; do
+  if sudo docker compose ps -q app >/dev/null 2>&1; then
+    if sudo docker compose exec -T app npm run prisma:migrate; then
+      migrate_done=true
+      break
+    fi
+  fi
+  echo "Waiting for app container to be ready (${attempt}/30)..."
+  sleep 2
+done
+
+if [[ "$migrate_done" != true ]]; then
+  echo "Migration failed after waiting for the app container." >&2
+  exit 1
+fi
+
+sudo docker compose exec -T app npm run seed
 
 echo "Installation complete."
