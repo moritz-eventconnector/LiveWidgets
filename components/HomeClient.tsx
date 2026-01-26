@@ -51,7 +51,7 @@ const faqs = [
 ];
 
 export default function HomeClient() {
-  const currentYear = new Date().getFullYear();
+  const currentYear = 2024;
 
   return (
     <div className="min-h-screen bg-obs-black text-white">
