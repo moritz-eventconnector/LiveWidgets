@@ -1,18 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
 export default function TournamentOverlayClient({ room }: { room: string }) {
   const [round, setRound] = useState('Round 1');
   const [match, setMatch] = useState('TBD');
-  const socketUrl = useMemo(
-    () => process.env.NEXT_PUBLIC_SOCKET_URL ?? window.location.origin,
-    []
-  );
+  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
 
   useEffect(() => {
-    const socket = io(socketUrl, { path: '/socket' });
+    const resolvedSocketUrl = socketUrl ?? window.location.origin;
+    const socket = io(resolvedSocketUrl, { path: '/socket' });
     socket.emit('join', room);
     socket.on('tournament:update', (payload) => {
       if (payload?.round) {
