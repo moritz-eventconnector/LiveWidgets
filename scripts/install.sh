@@ -79,6 +79,33 @@ prompt_optional() {
   echo "$value"
 }
 
+prompt_yes_no() {
+  local label="$1"
+  local default_value="${2:-y}"
+  local value=""
+  local normalized_default="y"
+  if [[ "${default_value,,}" == "n" ]]; then
+    normalized_default="n"
+  fi
+  while true; do
+    read -rp "${label} [${normalized_default}]: " value
+    value="${value:-$normalized_default}"
+    case "${value,,}" in
+      y|yes)
+        echo "y"
+        return 0
+        ;;
+      n|no)
+        echo "n"
+        return 0
+        ;;
+      *)
+        echo "Please enter y or n."
+        ;;
+    esac
+  done
+}
+
 get_env_value() {
   local key="$1"
   if [[ -f .env ]]; then
@@ -107,17 +134,37 @@ existing_postgres_volume=false
 if docker volume ls -q --filter name=postgres_data | grep -q .; then
   existing_postgres_volume=true
 fi
-if [[ -z "$POSTGRES_PASSWORD_DEFAULT" ]]; then
-  if [[ "$existing_postgres_volume" == true ]]; then
-    echo "Existing postgres volume detected. Please provide the current POSTGRES_PASSWORD to avoid authentication failures."
-  else
-    POSTGRES_PASSWORD_DEFAULT=$(generate_secret)
+reset_postgres_volume=false
+if [[ "$existing_postgres_volume" == true ]]; then
+  echo "Existing postgres volume detected."
+  reuse_postgres_volume=$(prompt_yes_no "Reuse existing postgres data volume? (If no, data will be removed)" "y")
+  if [[ "$reuse_postgres_volume" == "n" ]]; then
+    reset_postgres_volume=true
   fi
 fi
-if [[ -n "$POSTGRES_PASSWORD_DEFAULT" ]]; then
-  POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_DEFAULT")
-else
+
+if [[ "$existing_postgres_volume" == true && "$reset_postgres_volume" != true && -z "$POSTGRES_PASSWORD_DEFAULT" ]]; then
+  echo "Please provide the current POSTGRES_PASSWORD to avoid authentication failures."
   POSTGRES_PASSWORD=$(prompt_required "POSTGRES_PASSWORD")
+else
+  if [[ -z "$POSTGRES_PASSWORD_DEFAULT" ]]; then
+    POSTGRES_PASSWORD_DEFAULT=$(generate_secret)
+  fi
+  POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_DEFAULT")
+fi
+
+if [[ "$reset_postgres_volume" == true ]]; then
+  echo "Removing existing postgres container and volume..."
+  sudo docker compose stop postgres >/dev/null 2>&1 || true
+  sudo docker compose rm -f -s postgres >/dev/null 2>&1 || true
+  postgres_volumes=$(docker volume ls -q --filter name=postgres_data)
+  if [[ -n "$postgres_volumes" ]]; then
+    while IFS= read -r volume; do
+      if [[ -n "$volume" ]]; then
+        sudo docker volume rm "$volume"
+      fi
+    done <<< "$postgres_volumes"
+  fi
 fi
 REDIS_PASSWORD_DEFAULT=$(get_env_value "REDIS_PASSWORD" || true)
 if [[ -z "$REDIS_PASSWORD_DEFAULT" ]]; then
