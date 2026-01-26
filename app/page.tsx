@@ -1,5 +1,5 @@
-import HomePage from '@/components/HomePage';
+import dynamicImport from 'next/dynamic';
 
 export default function Home() {
-  return <HomePage />;
+  return <HomeClient />;
 }
