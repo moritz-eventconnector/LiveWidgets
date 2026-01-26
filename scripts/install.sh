@@ -103,8 +103,21 @@ generate_secret() {
 DOMAIN=$(prompt_with_default "DOMAIN (example: livewidgets.de)" "$(get_env_value "DOMAIN" || true)")
 LETSENCRYPT_EMAIL=$(prompt_with_default "LETSENCRYPT_EMAIL" "$(get_env_value "LETSENCRYPT_EMAIL" || true)")
 POSTGRES_PASSWORD_DEFAULT=$(get_env_value "POSTGRES_PASSWORD" || true)
+existing_postgres_volume=false
+if docker volume ls -q --filter name=postgres_data | grep -q .; then
+  existing_postgres_volume=true
+fi
 if [[ -z "$POSTGRES_PASSWORD_DEFAULT" ]]; then
-  POSTGRES_PASSWORD_DEFAULT=$(generate_secret)
+  if [[ "$existing_postgres_volume" == true ]]; then
+    echo "Existing postgres volume detected. Please provide the current POSTGRES_PASSWORD to avoid authentication failures."
+  else
+    POSTGRES_PASSWORD_DEFAULT=$(generate_secret)
+  fi
+fi
+if [[ -n "$POSTGRES_PASSWORD_DEFAULT" ]]; then
+  POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_DEFAULT")
+else
+  POSTGRES_PASSWORD=$(prompt_required "POSTGRES_PASSWORD")
 fi
 REDIS_PASSWORD_DEFAULT=$(get_env_value "REDIS_PASSWORD" || true)
 if [[ -z "$REDIS_PASSWORD_DEFAULT" ]]; then
@@ -114,7 +127,6 @@ NEXTAUTH_SECRET_DEFAULT=$(get_env_value "NEXTAUTH_SECRET" || true)
 if [[ -z "$NEXTAUTH_SECRET_DEFAULT" ]]; then
   NEXTAUTH_SECRET_DEFAULT=$(generate_secret)
 fi
-POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_DEFAULT")
 REDIS_PASSWORD=$(prompt_optional "REDIS_PASSWORD" "$REDIS_PASSWORD_DEFAULT")
 NEXTAUTH_SECRET=$(prompt_optional "NEXTAUTH_SECRET" "$NEXTAUTH_SECRET_DEFAULT")
 STRIPE_SECRET_KEY=$(prompt_with_default "STRIPE_SECRET_KEY" "$(get_env_value "STRIPE_SECRET_KEY" || true)")
