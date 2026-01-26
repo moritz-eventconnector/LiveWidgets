@@ -62,3 +62,4 @@ bash scripts/update.sh
 ## Hinweise
 - Das Projekt ist ein Streaming Companion ohne Echtgeld-Glücksspiel.
 - Secrets werden ausschließlich via `.env` geladen.
+- Wenn `POSTGRES_PASSWORD` nach der initialen Datenbank-Erstellung geändert wird, musst du das alte Passwort wieder setzen oder das Volume neu erstellen (`docker compose down -v`), sonst schlagen Prisma-Migrationen mit Auth-Fehlern fehl.
