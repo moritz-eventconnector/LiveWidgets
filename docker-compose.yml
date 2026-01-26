@@ -3,6 +3,8 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://livewidgets:${POSTGRES_PASSWORD}@postgres:5432/livewidgets
     depends_on:
       - postgres
       - redis
@@ -21,6 +23,8 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://livewidgets:${POSTGRES_PASSWORD}@postgres:5432/livewidgets
     command: ["npm", "run", "bot"]
     depends_on:
       - postgres
