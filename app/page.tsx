@@ -1,6 +1,6 @@
-import FooterYear from '@/components/FooterYear';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useEffect, useState } from 'react';
 
 const features = [
   {
@@ -53,6 +53,18 @@ const faqs = [
 ];
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="min-h-screen bg-obs-black text-white">
       <header className="flex items-center justify-between px-6 py-6 md:px-16">
@@ -176,9 +188,7 @@ export default function Home() {
 
       <footer className="border-t border-white/10 px-6 py-10 text-sm text-white/60 md:px-16">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p>
-            © <FooterYear /> LiveWidgets
-          </p>
+          <p>© {currentYear} LiveWidgets</p>
           <p>
             LiveWidgets is a streaming companion. No gambling, no betting, no
             real-money games.
