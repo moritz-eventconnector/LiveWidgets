@@ -57,6 +57,7 @@ git pull
 
 if [[ "$clean_build" == true ]]; then
   echo "Running clean rebuild (no cache, force recreate containers)..."
+  rm -rf .next node_modules
   sudo docker compose build --no-cache
 else
   sudo docker compose build
