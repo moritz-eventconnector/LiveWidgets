@@ -106,6 +106,8 @@ volumes:
 
 networks:
   web:
+    name: web
     external: false
   internal:
+    name: internal
     external: false
