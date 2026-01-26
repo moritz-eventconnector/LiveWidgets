@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'LiveWidgets – Interactive Twitch Overlays',
   description:
     'Interaktive OBS-Overlays & Twitch-Widgets für Bonushunts, Slot Requests & Tournaments.',
+  icons: {
+    icon: '/favicon.ico'
+  },
   openGraph: {
     title: 'LiveWidgets – Interactive Twitch Overlays',
     description:
@@ -24,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="de">
+    <html lang="de" suppressHydrationWarning>
       <body className={inter.className}>{children}</body>
     </html>
   );
