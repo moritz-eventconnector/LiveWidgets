@@ -15,10 +15,18 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-if [[ -n "$(git status --porcelain)" ]]; then
+dirty_entries="$(git status --porcelain)"
+ignored_dirty_entries="$(echo "$dirty_entries" | grep -E '^\?\? \.env\.backup\.[0-9]+$' || true)"
+filtered_dirty_entries="$(echo "$dirty_entries" | grep -vE '^\?\? \.env\.backup\.[0-9]+$' || true)"
+
+if [[ -n "$filtered_dirty_entries" ]]; then
   echo "Working tree has uncommitted changes. Please commit or reset them before updating." >&2
   git status --short >&2
   exit 1
+fi
+
+if [[ -n "$ignored_dirty_entries" ]]; then
+  echo "Ignoring .env.backup.* files created during previous updates." >&2
 fi
 
 load_env_file() {
