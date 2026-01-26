@@ -1,4 +1,4 @@
-const currentYear = new Date().getFullYear();
+const currentYear = 2024;
 
 const features = [
   {
