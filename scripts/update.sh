@@ -46,7 +46,12 @@ fi
 
 git pull
 sudo docker compose build
-sudo docker compose up -d
+
+if sudo docker compose up --help | grep -q -- '--wait'; then
+  sudo docker compose up -d --wait
+else
+  sudo docker compose up -d
+fi
 
 postgres_ready=false
 for attempt in {1..30}; do
@@ -60,6 +65,7 @@ done
 
 if [[ "$postgres_ready" != true ]]; then
   echo "Postgres did not become ready in time." >&2
+  sudo docker compose logs --tail=200 postgres >&2 || true
   exit 1
 fi
 
