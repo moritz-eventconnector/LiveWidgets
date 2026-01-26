@@ -69,6 +69,19 @@ prompt_optional() {
   echo "$value"
 }
 
+get_env_value() {
+  local key="$1"
+  if [[ -f .env ]]; then
+    while IFS= read -r line; do
+      if [[ "$line" == "${key}="* ]]; then
+        echo "${line#${key}=}"
+        return 0
+      fi
+    done < .env
+  fi
+  return 1
+}
+
 generate_secret() {
   if command -v openssl >/dev/null 2>&1; then
     openssl rand -hex 32
@@ -79,9 +92,21 @@ generate_secret() {
 
 DOMAIN=$(prompt_required "DOMAIN (example: livewidgets.de)")
 LETSENCRYPT_EMAIL=$(prompt_required "LETSENCRYPT_EMAIL")
-POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$(generate_secret)")
-REDIS_PASSWORD=$(prompt_optional "REDIS_PASSWORD" "$(generate_secret)")
-NEXTAUTH_SECRET=$(prompt_optional "NEXTAUTH_SECRET" "$(generate_secret)")
+POSTGRES_PASSWORD_DEFAULT=$(get_env_value "POSTGRES_PASSWORD" || true)
+if [[ -z "$POSTGRES_PASSWORD_DEFAULT" ]]; then
+  POSTGRES_PASSWORD_DEFAULT=$(generate_secret)
+fi
+REDIS_PASSWORD_DEFAULT=$(get_env_value "REDIS_PASSWORD" || true)
+if [[ -z "$REDIS_PASSWORD_DEFAULT" ]]; then
+  REDIS_PASSWORD_DEFAULT=$(generate_secret)
+fi
+NEXTAUTH_SECRET_DEFAULT=$(get_env_value "NEXTAUTH_SECRET" || true)
+if [[ -z "$NEXTAUTH_SECRET_DEFAULT" ]]; then
+  NEXTAUTH_SECRET_DEFAULT=$(generate_secret)
+fi
+POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_DEFAULT")
+REDIS_PASSWORD=$(prompt_optional "REDIS_PASSWORD" "$REDIS_PASSWORD_DEFAULT")
+NEXTAUTH_SECRET=$(prompt_optional "NEXTAUTH_SECRET" "$NEXTAUTH_SECRET_DEFAULT")
 STRIPE_SECRET_KEY=$(prompt_required "STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET=$(prompt_required "STRIPE_WEBHOOK_SECRET")
 STRIPE_PRICE_ID_CREATOR=$(prompt_required "STRIPE_PRICE_ID_CREATOR")
