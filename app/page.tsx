@@ -1,10 +1,5 @@
-import dynamic from 'next/dynamic';
-
-const HomeClient = dynamic(() => import('@/components/HomeClient'), {
-  ssr: false,
-  loading: () => null
-});
+import HomePage from '@/components/HomePage';
 
 export default function Home() {
-  return <HomeClient />;
+  return <HomePage />;
 }

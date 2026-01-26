@@ -59,6 +59,12 @@ bash scripts/install.sh
 bash scripts/update.sh
 ```
 
+Vorher nichts entfernen, solange die `.env` vorhanden ist und das bestehende `POSTGRES_PASSWORD` weiterhin passt. Nur wenn du das Datenbank-Passwort geändert hast oder bewusst eine frische Datenbank willst, musst du die Volumes löschen:
+
+```bash
+sudo docker compose down -v
+```
+
 ## Hinweise
 - Das Projekt ist ein Streaming Companion ohne Echtgeld-Glücksspiel.
 - Secrets werden ausschließlich via `.env` geladen.
