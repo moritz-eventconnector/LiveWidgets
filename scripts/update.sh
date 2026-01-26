@@ -15,6 +15,12 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Working tree has uncommitted changes. Please commit or reset them before updating." >&2
+  git status --short >&2
+  exit 1
+fi
+
 load_env_file() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line#"${line%%[![:space:]]*}"}"
