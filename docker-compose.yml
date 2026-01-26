@@ -55,7 +55,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - internal
+      internal:
+        aliases:
+          - livewidgets
 
   redis:
     image: redis:7-alpine
