@@ -1,3 +1,7 @@
+import FooterYear from '@/components/FooterYear';
+
+export const dynamic = 'force-dynamic';
+
 const features = [
   {
     title: 'Bonus Hunts',
@@ -172,7 +176,9 @@ export default function Home() {
 
       <footer className="border-t border-white/10 px-6 py-10 text-sm text-white/60 md:px-16">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} LiveWidgets</p>
+          <p>
+            © <FooterYear /> LiveWidgets
+          </p>
           <p>
             LiveWidgets is a streaming companion. No gambling, no betting, no
             real-money games.
