@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 const features = [
   {
     title: 'Bonus Hunts',
@@ -56,11 +54,14 @@ export default function Home() {
       <header className="flex items-center justify-between px-6 py-6 md:px-16">
         <div className="text-xl font-semibold">LiveWidgets</div>
         <nav className="flex items-center gap-6 text-sm text-white/80">
-          <Link href="#features">Features</Link>
-          <Link href="#pricing">Pricing</Link>
-          <Link href="/app" className="rounded-full bg-obs-accent px-4 py-2 text-white">
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a
+            href="/app"
+            className="rounded-full bg-obs-accent px-4 py-2 text-white"
+          >
             Login
-          </Link>
+          </a>
         </nav>
       </header>
 
@@ -79,18 +80,18 @@ export default function Home() {
               Hand.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link
+              <a
                 href="/app"
                 className="rounded-full bg-obs-accent px-6 py-3 text-sm font-semibold text-white"
               >
                 Get Started
-              </Link>
-              <Link
+              </a>
+              <a
                 href="#pricing"
                 className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold"
               >
                 Pricing ansehen
-              </Link>
+              </a>
             </div>
           </div>
         </section>
@@ -131,12 +132,12 @@ export default function Home() {
                 <li>Tournaments</li>
                 <li>OBS Overlays</li>
               </ul>
-              <Link
+              <a
                 href="/app"
                 className="mt-6 inline-flex rounded-full bg-obs-accent px-5 py-2 text-sm font-semibold"
               >
                 Starten
-              </Link>
+              </a>
             </div>
             <div className="rounded-2xl border border-white/10 bg-obs-card p-6">
               <h3 className="text-xl font-semibold">Creator+</h3>
@@ -146,12 +147,12 @@ export default function Home() {
                 <li>Website-Baukasten (extern bereitgestellt)</li>
                 <li>Feature-Flag aktivierbar</li>
               </ul>
-              <Link
+              <a
                 href="/app"
                 className="mt-6 inline-flex rounded-full border border-white/20 px-5 py-2 text-sm font-semibold"
               >
                 Upgrade
-              </Link>
+              </a>
             </div>
           </div>
         </section>
