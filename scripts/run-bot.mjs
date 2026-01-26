@@ -45,6 +45,8 @@ client.on('message', async (channelName, tags, message, self) => {
     (entry) => `#${entry.twitchBroadcasterLogin}` === channelName
   );
   if (!channel) return;
+  const displayName = tags['display-name'] ?? tags.username ?? 'viewer';
+  const appUrl = process.env.APP_URL ?? (process.env.DOMAIN ? `https://${process.env.DOMAIN}` : '');
 
   if (command === '!sr' && rest[0] === 'clear' && isModerator(tags)) {
     await prisma.slotRequest.deleteMany({
@@ -90,7 +92,7 @@ client.on('message', async (channelName, tags, message, self) => {
     await prisma.slotRequest.create({
       data: {
         slotName,
-        requestedBy: tags['display-name'] ?? 'viewer',
+        requestedBy: displayName,
         channelId: channel.id
       }
     });
@@ -107,25 +109,6 @@ client.on('message', async (channelName, tags, message, self) => {
     return;
   }
 
-  if (command === '!ts' && isModerator(tags)) {
-    const size = Number(rest.pop());
-    const title = rest.join(' ') || 'Tournament';
-    const tournament = await prisma.tournament.create({
-      data: {
-        channelId: channel.id,
-        title,
-        size: Number.isNaN(size) ? 8 : size
-      }
-    });
-    await publishRealtime({
-      event: 'tournament:update',
-      room: `tournament:${tournament.id}`,
-      payload: { round: 'Round 1', match: `${title} gestartet` }
-    });
-    client.say(channelName, `Turnier gestartet: ${title}`);
-    return;
-  }
-
   if (command === '!join') {
     const tournament = await prisma.tournament.findFirst({
       where: { channelId: channel.id },
@@ -135,44 +118,20 @@ client.on('message', async (channelName, tags, message, self) => {
       client.say(channelName, 'Kein aktives Turnier.');
       return;
     }
-    await prisma.tournamentPlayer.create({
-      data: {
-        tournamentId: tournament.id,
-        displayName: tags['display-name'] ?? 'viewer',
-        seed: Math.floor(Math.random() * 1000)
-      }
-    });
-    await publishRealtime({
-      event: 'tournament:update',
-      room: `tournament:${tournament.id}`,
-      payload: { round: 'Round 1', match: 'Player joined' }
-    });
-    client.say(channelName, `${tags['display-name'] ?? 'viewer'} joined.`);
-    return;
-  }
-
-  if (command === '!win' && isModerator(tags)) {
-    const winner = rest.join(' ');
-    const tournament = await prisma.tournament.findFirst({
-      where: { channelId: channel.id },
-      orderBy: { createdAt: 'desc' }
-    });
-    if (!tournament || !winner) {
+    if (!appUrl) {
+      client.say(channelName, 'Join-Link konnte nicht erstellt werden (APP_URL fehlt).');
       return;
     }
-    await prisma.tournamentMatch.create({
-      data: {
-        tournamentId: tournament.id,
-        round: 1,
-        winner
-      }
-    });
-    await publishRealtime({
-      event: 'tournament:update',
-      room: `tournament:${tournament.id}`,
-      payload: { round: 'Round 1', match: `Winner: ${winner}` }
-    });
-    client.say(channelName, `Winner gesetzt: ${winner}`);
+    const joinUrl = `${appUrl}/t/${tournament.id}/join?name=${encodeURIComponent(displayName)}`;
+    const whisperTarget = tags.username ?? displayName.toLowerCase();
+    try {
+      await client.whisper(
+        whisperTarget,
+        `Hier ist dein Join-Link: ${joinUrl}`
+      );
+    } catch (error) {
+      client.say(channelName, `@${displayName} Join-Link: ${joinUrl}`);
+    }
   }
 });
 

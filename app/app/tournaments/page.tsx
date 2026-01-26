@@ -75,7 +75,8 @@ export default async function TournamentsPage() {
 
     const tournamentId = String(formData.get('tournamentId') ?? '');
     const displayName = String(formData.get('displayName') ?? '').trim();
-    if (!tournamentId || !displayName) {
+    const slotName = String(formData.get('slotName') ?? '').trim();
+    if (!tournamentId || !displayName || !slotName) {
       return;
     }
 
@@ -96,6 +97,7 @@ export default async function TournamentsPage() {
       data: {
         tournamentId,
         displayName,
+        slotName,
         seed: tournament.players.length + 1
       }
     });
@@ -291,7 +293,8 @@ export default async function TournamentsPage() {
                     <ul className="mt-2 space-y-1 text-sm text-white/70">
                       {tournament.players.map((player) => (
                         <li key={player.id}>
-                          #{player.seed} · {player.displayName}
+                          #{player.seed} · {player.displayName}{' '}
+                          <span className="text-white/50">({player.slotName ?? 'Slot'})</span>
                         </li>
                       ))}
                     </ul>
@@ -303,6 +306,12 @@ export default async function TournamentsPage() {
                     type="text"
                     name="displayName"
                     placeholder="Twitch User"
+                    className="w-40 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs"
+                  />
+                  <input
+                    type="text"
+                    name="slotName"
+                    placeholder="Slot"
                     className="w-40 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs"
                   />
                   <button className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold">
@@ -379,9 +388,7 @@ export default async function TournamentsPage() {
       </SectionCard>
       <SectionCard title="Chat Commands">
         <ul className="space-y-2 text-sm text-white/70">
-          <li>!join – dem Turnier beitreten</li>
-          <li>!ts &lt;titel&gt; &lt;size&gt; – Turnier starten</li>
-          <li>!win @user – Ergebnis setzen</li>
+          <li>!join – Link zum Join-Formular per Whisper</li>
         </ul>
       </SectionCard>
     </div>

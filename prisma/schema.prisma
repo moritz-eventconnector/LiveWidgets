@@ -147,6 +147,7 @@ model TournamentPlayer {
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id])
   displayName  String
+  slotName     String?
   seed         Int
   createdAt    DateTime @default(now())
 }
