@@ -231,12 +231,20 @@ sudo docker compose up -d --build
 migrate_done=false
 for attempt in {1..30}; do
   if sudo docker compose ps -q app >/dev/null 2>&1; then
-    if sudo docker compose exec -T app npm run prisma:migrate; then
-      migrate_done=true
-      break
-    elif sudo docker compose exec -T app npm run prisma:push; then
-      migrate_done=true
-      break
+    if [[ ! -d prisma/migrations || -z "$(find prisma/migrations -maxdepth 1 -type d -not -path prisma/migrations 2>/dev/null)" ]]; then
+      echo "No prisma migrations found. Running prisma db push..."
+      if sudo docker compose exec -T app npm run prisma:push; then
+        migrate_done=true
+        break
+      fi
+    else
+      if sudo docker compose exec -T app npm run prisma:migrate; then
+        migrate_done=true
+        break
+      elif sudo docker compose exec -T app npm run prisma:push; then
+        migrate_done=true
+        break
+      fi
     fi
   fi
   echo "Waiting for app container to be ready (${attempt}/30)..."

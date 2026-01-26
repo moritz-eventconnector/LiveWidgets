@@ -11,21 +11,31 @@ if (!email || !password) {
   process.exit(1);
 }
 
-const existing = await prisma.user.findUnique({ where: { email } });
-if (existing) {
-  console.log('Admin user already exists');
-  await prisma.$disconnect();
-  process.exit(0);
-}
-
-const hash = await bcrypt.hash(password, 12);
-await prisma.user.create({
-  data: {
-    email,
-    passwordHash: hash,
-    role: 'ADMIN'
+try {
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    console.log('Admin user already exists');
+    await prisma.$disconnect();
+    process.exit(0);
   }
-});
 
-console.log('Admin user created');
-await prisma.$disconnect();
+  const hash = await bcrypt.hash(password, 12);
+  await prisma.user.create({
+    data: {
+      email,
+      passwordHash: hash,
+      role: 'ADMIN'
+    }
+  });
+
+  console.log('Admin user created');
+  await prisma.$disconnect();
+} catch (error) {
+  if (error?.code === 'P2021') {
+    console.error('Database schema missing. Run prisma migrate deploy or prisma db push before seeding.');
+  } else {
+    console.error(error);
+  }
+  await prisma.$disconnect();
+  process.exit(1);
+}
