@@ -1,3 +1,5 @@
+const currentYear = new Date().getFullYear();
+
 const features = [
   {
     title: 'Bonus Hunts',
@@ -49,8 +51,6 @@ const faqs = [
 ];
 
 export default function HomePage() {
-  const currentYear = new Date().getFullYear();
-
   return (
     <div className="min-h-screen bg-obs-black text-white">
       <header className="flex items-center justify-between px-6 py-6 md:px-16">
