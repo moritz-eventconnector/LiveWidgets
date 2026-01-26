@@ -58,6 +58,16 @@ prompt_required() {
   echo "$value"
 }
 
+prompt_with_default() {
+  local label="$1"
+  local default_value="${2:-}"
+  if [[ -n "$default_value" ]]; then
+    prompt_optional "$label" "$default_value"
+  else
+    prompt_required "$label"
+  fi
+}
+
 prompt_optional() {
   local label="$1"
   local default_value="${2:-}"
@@ -90,8 +100,8 @@ generate_secret() {
   fi
 }
 
-DOMAIN=$(prompt_required "DOMAIN (example: livewidgets.de)")
-LETSENCRYPT_EMAIL=$(prompt_required "LETSENCRYPT_EMAIL")
+DOMAIN=$(prompt_with_default "DOMAIN (example: livewidgets.de)" "$(get_env_value "DOMAIN" || true)")
+LETSENCRYPT_EMAIL=$(prompt_with_default "LETSENCRYPT_EMAIL" "$(get_env_value "LETSENCRYPT_EMAIL" || true)")
 POSTGRES_PASSWORD_DEFAULT=$(get_env_value "POSTGRES_PASSWORD" || true)
 if [[ -z "$POSTGRES_PASSWORD_DEFAULT" ]]; then
   POSTGRES_PASSWORD_DEFAULT=$(generate_secret)
@@ -107,21 +117,21 @@ fi
 POSTGRES_PASSWORD=$(prompt_optional "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD_DEFAULT")
 REDIS_PASSWORD=$(prompt_optional "REDIS_PASSWORD" "$REDIS_PASSWORD_DEFAULT")
 NEXTAUTH_SECRET=$(prompt_optional "NEXTAUTH_SECRET" "$NEXTAUTH_SECRET_DEFAULT")
-STRIPE_SECRET_KEY=$(prompt_required "STRIPE_SECRET_KEY")
-STRIPE_WEBHOOK_SECRET=$(prompt_required "STRIPE_WEBHOOK_SECRET")
-STRIPE_PRICE_ID_CREATOR=$(prompt_required "STRIPE_PRICE_ID_CREATOR")
-STRIPE_PRICE_ID_CREATOR_PLUS=$(prompt_required "STRIPE_PRICE_ID_CREATOR_PLUS")
-TWITCH_CLIENT_ID=$(prompt_required "TWITCH_CLIENT_ID")
-TWITCH_CLIENT_SECRET=$(prompt_required "TWITCH_CLIENT_SECRET")
-BOT_TWITCH_USERNAME=$(prompt_required "BOT_TWITCH_USERNAME")
-BOT_TWITCH_OAUTH_TOKEN=$(prompt_required "BOT_TWITCH_OAUTH_TOKEN")
-SMTP_HOST=$(prompt_required "SMTP_HOST")
-SMTP_PORT=$(prompt_required "SMTP_PORT")
-SMTP_USER=$(prompt_required "SMTP_USER")
-SMTP_PASS=$(prompt_required "SMTP_PASS")
-SMTP_FROM=$(prompt_required "SMTP_FROM")
-ADMIN_EMAIL=$(prompt_required "ADMIN_EMAIL")
-ADMIN_PASSWORD=$(prompt_required "ADMIN_PASSWORD")
+STRIPE_SECRET_KEY=$(prompt_with_default "STRIPE_SECRET_KEY" "$(get_env_value "STRIPE_SECRET_KEY" || true)")
+STRIPE_WEBHOOK_SECRET=$(prompt_with_default "STRIPE_WEBHOOK_SECRET" "$(get_env_value "STRIPE_WEBHOOK_SECRET" || true)")
+STRIPE_PRICE_ID_CREATOR=$(prompt_with_default "STRIPE_PRICE_ID_CREATOR" "$(get_env_value "STRIPE_PRICE_ID_CREATOR" || true)")
+STRIPE_PRICE_ID_CREATOR_PLUS=$(prompt_with_default "STRIPE_PRICE_ID_CREATOR_PLUS" "$(get_env_value "STRIPE_PRICE_ID_CREATOR_PLUS" || true)")
+TWITCH_CLIENT_ID=$(prompt_with_default "TWITCH_CLIENT_ID" "$(get_env_value "TWITCH_CLIENT_ID" || true)")
+TWITCH_CLIENT_SECRET=$(prompt_with_default "TWITCH_CLIENT_SECRET" "$(get_env_value "TWITCH_CLIENT_SECRET" || true)")
+BOT_TWITCH_USERNAME=$(prompt_with_default "BOT_TWITCH_USERNAME" "$(get_env_value "BOT_TWITCH_USERNAME" || true)")
+BOT_TWITCH_OAUTH_TOKEN=$(prompt_with_default "BOT_TWITCH_OAUTH_TOKEN" "$(get_env_value "BOT_TWITCH_OAUTH_TOKEN" || true)")
+SMTP_HOST=$(prompt_with_default "SMTP_HOST" "$(get_env_value "SMTP_HOST" || true)")
+SMTP_PORT=$(prompt_with_default "SMTP_PORT" "$(get_env_value "SMTP_PORT" || true)")
+SMTP_USER=$(prompt_with_default "SMTP_USER" "$(get_env_value "SMTP_USER" || true)")
+SMTP_PASS=$(prompt_with_default "SMTP_PASS" "$(get_env_value "SMTP_PASS" || true)")
+SMTP_FROM=$(prompt_with_default "SMTP_FROM" "$(get_env_value "SMTP_FROM" || true)")
+ADMIN_EMAIL=$(prompt_with_default "ADMIN_EMAIL" "$(get_env_value "ADMIN_EMAIL" || true)")
+ADMIN_PASSWORD=$(prompt_with_default "ADMIN_PASSWORD" "$(get_env_value "ADMIN_PASSWORD" || true)")
 
 if [[ -f .env ]]; then
   mv .env ".env.backup.$(date +%s)"
