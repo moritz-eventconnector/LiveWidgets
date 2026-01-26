@@ -228,6 +228,36 @@ ENV
 
 sudo docker compose up -d --build
 
+postgres_ready=false
+for attempt in {1..30}; do
+  if sudo docker compose exec -T postgres pg_isready -U livewidgets >/dev/null 2>&1; then
+    postgres_ready=true
+    break
+  fi
+  echo "Waiting for postgres container to be ready (${attempt}/30)..."
+  sleep 2
+done
+
+if [[ "$postgres_ready" != true ]]; then
+  echo "Postgres did not become ready in time." >&2
+  exit 1
+fi
+
+if ! sudo docker compose exec -T postgres env PGPASSWORD="${POSTGRES_PASSWORD}" \
+  psql -U livewidgets -d livewidgets -c "SELECT 1" >/dev/null 2>&1; then
+  cat <<'EOF' >&2
+Database authentication failed.
+
+This usually happens when POSTGRES_PASSWORD was changed after the database volume was created.
+To fix this, either restore the original password in .env or reset the database volume:
+
+  sudo docker compose down -v
+  sudo docker compose up -d --build
+
+EOF
+  exit 1
+fi
+
 migrate_done=false
 for attempt in {1..30}; do
   if sudo docker compose ps -q app >/dev/null 2>&1; then
