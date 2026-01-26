@@ -1,5 +1,6 @@
 FROM node:20-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache openssl1.1-compat
 
 FROM base AS deps
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
