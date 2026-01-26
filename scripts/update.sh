@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+clean_build=false
+for arg in "$@"; do
+  case "$arg" in
+    --clean)
+      clean_build=true
+      ;;
+  esac
+done
+
 if [[ ! -f .env ]]; then
   echo "Missing .env file. Copy .env.example to .env and configure your secrets before updating." >&2
   exit 1
@@ -45,12 +54,27 @@ if [[ -z "${POSTGRES_PASSWORD:-}" ]]; then
 fi
 
 git pull
-sudo docker compose build
+
+if [[ "$clean_build" == true ]]; then
+  echo "Running clean rebuild (no cache, force recreate containers)..."
+  rm -rf .next node_modules
+  sudo docker compose build --no-cache
+else
+  sudo docker compose build
+fi
 
 if sudo docker compose up --help | grep -q -- '--wait'; then
-  sudo docker compose up -d --wait
+  if [[ "$clean_build" == true ]]; then
+    sudo docker compose up -d --wait --force-recreate
+  else
+    sudo docker compose up -d --wait
+  fi
 else
-  sudo docker compose up -d
+  if [[ "$clean_build" == true ]]; then
+    sudo docker compose up -d --force-recreate
+  else
+    sudo docker compose up -d
+  fi
 fi
 
 postgres_ready=false
