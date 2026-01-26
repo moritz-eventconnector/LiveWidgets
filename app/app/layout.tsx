@@ -1,12 +1,15 @@
 import DashboardNav from '@/components/DashboardNav';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { getSessionUser, getChannelForUser } from '@/lib/access';
+import { headers } from 'next/headers';
 
 export default async function AppLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = headers().get('x-pathname') ?? '';
+  const allowInactive = pathname === '/app/billing';
   const user = await getSessionUser();
   const channel = user ? await getChannelForUser(user.id) : null;
 
@@ -23,7 +26,10 @@ export default async function AppLayout({
             Dieser Channel ist derzeit gesperrt. Bitte kontaktiere den Support.
           </div>
         ) : (
-          <SubscriptionGate status={channel.subscriptionStatus}>
+          <SubscriptionGate
+            status={channel.subscriptionStatus}
+            allowInactive={allowInactive}
+          >
             {children}
           </SubscriptionGate>
         )}
