@@ -1,5 +1,7 @@
 import FooterYear from '@/components/FooterYear';
 
+export const dynamic = 'force-dynamic';
+
 const features = [
   {
     title: 'Bonus Hunts',
