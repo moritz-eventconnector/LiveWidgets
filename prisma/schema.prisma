@@ -47,6 +47,7 @@ model User {
   moderatorLinks ModeratorLink[]
   accounts       Account[]
   sessions       Session[]
+  guesses        Guess[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
