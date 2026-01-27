@@ -2,10 +2,14 @@
 set -euo pipefail
 
 clean_build=false
+force_reset=false
 for arg in "$@"; do
   case "$arg" in
     --clean)
       clean_build=true
+      ;;
+    --force)
+      force_reset=true
       ;;
   esac
 done
@@ -20,9 +24,16 @@ ignored_dirty_entries="$(echo "$dirty_entries" | grep -E '^\?\? \.env\.backup\.[
 filtered_dirty_entries="$(echo "$dirty_entries" | grep -vE '^\?\? \.env\.backup\.[0-9]+$' || true)"
 
 if [[ -n "$filtered_dirty_entries" ]]; then
-  echo "Working tree has uncommitted changes. Please commit or reset them before updating." >&2
-  git status --short >&2
-  exit 1
+  if [[ "$force_reset" == true ]]; then
+    echo "Working tree has uncommitted changes. Forcing a reset to match HEAD." >&2
+    git status --short >&2
+    git reset --hard HEAD
+    git clean -fd -e .env -e ".env.backup.*"
+  else
+    echo "Working tree has uncommitted changes. Please commit or reset them before updating." >&2
+    git status --short >&2
+    exit 1
+  fi
 fi
 
 if [[ -n "$ignored_dirty_entries" ]]; then
