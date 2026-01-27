@@ -14,15 +14,27 @@ export default function ClientRuntimeLogger() {
         nodeType: node.nodeType,
         nodeName: node.nodeName
       }));
+      const htmlCount = document.getElementsByTagName('html').length;
+      const bodyCount = document.getElementsByTagName('body').length;
+      const headCount = document.getElementsByTagName('head').length;
+      const doctype = document.doctype ? `<!DOCTYPE ${document.doctype.name}>` : 'none';
+      const htmlPreview = html?.outerHTML?.slice(0, 300) ?? '';
+      const bodyPreview = body?.outerHTML?.slice(0, 300) ?? '';
 
       console.info(logPrefix, 'dom snapshot', label, {
         readyState: document.readyState,
+        doctype,
+        htmlCount,
+        headCount,
+        bodyCount,
         documentElement: html?.tagName,
         bodyTag: body?.tagName,
         htmlChildren,
         bodyChildren,
         documentChildren: extraDocumentChildren,
-        scripts: Array.from(document.scripts).map((script) => script.src || '[inline]')
+        scripts: Array.from(document.scripts).map((script) => script.src || '[inline]'),
+        htmlPreview,
+        bodyPreview
       });
     };
 
@@ -46,8 +58,13 @@ export default function ClientRuntimeLogger() {
       console.error(logPrefix, 'unhandled rejection', event.reason);
     };
 
+    const handleDomContentLoaded = () => snapshotDom('dom-content-loaded');
+    const handleWindowLoad = () => snapshotDom('window-load');
+
     window.addEventListener('error', handleError);
     window.addEventListener('unhandledrejection', handleRejection);
+    document.addEventListener('DOMContentLoaded', handleDomContentLoaded);
+    window.addEventListener('load', handleWindowLoad);
 
     const observer = new MutationObserver((mutations) => {
       const mutationSummary = mutations.map((mutation) => ({
@@ -73,6 +90,8 @@ export default function ClientRuntimeLogger() {
     return () => {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleRejection);
+      document.removeEventListener('DOMContentLoaded', handleDomContentLoaded);
+      window.removeEventListener('load', handleWindowLoad);
       observer.disconnect();
       console.info(logPrefix, 'listeners detached');
     };
