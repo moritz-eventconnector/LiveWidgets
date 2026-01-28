@@ -1,7 +1,18 @@
+import WorkspaceSettingsForm from '@/components/WorkspaceSettingsForm';
+
 const settingsChecklist = [
-  'Workspace-Profil & Branding',
-  'Team-Mitglieder & Rollen',
-  'API Tokens & Integrationen'
+  {
+    title: 'Workspace-Profil & Branding',
+    detail: 'Logo, Farben und Overlay-Defaults für dein gesamtes Team.'
+  },
+  {
+    title: 'Team-Mitglieder & Rollen',
+    detail: 'Lade Operatoren ein, definiere Berechtigungen und Onboarding-Flows.'
+  },
+  {
+    title: 'API Tokens & Integrationen',
+    detail: 'Verbinde Tools wie OBS, Discord, Spotify oder Stripe.'
+  }
 ];
 
 export default function SettingsPage() {
@@ -15,20 +26,24 @@ export default function SettingsPage() {
           Einstellungen & Administration
         </h2>
         <p className="text-sm text-slate-300">
-          Hier entsteht der zentrale Ort für Workspace-Setup, Rollenverwaltung
-          und Integrationen.
+          Die Settings bekommen als nächstes echte Konfigurationen. Der erste
+          Schritt ist ein Workspace-Setup, das Branding, Lokalisierung und
+          Standard-Automationen bündelt.
         </p>
       </header>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-6">
-        <ul className="space-y-3 text-sm text-slate-200">
-          {settingsChecklist.map((item) => (
-            <li key={item} className="flex items-start gap-2">
-              <span className="mt-1 h-2 w-2 rounded-full bg-indigo-400" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+      <WorkspaceSettingsForm />
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {settingsChecklist.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"
+          >
+            <p className="text-sm font-semibold text-white">{item.title}</p>
+            <p className="mt-2 text-xs text-slate-300">{item.detail}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
