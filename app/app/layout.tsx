@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 const navItems = [
-  { href: '/app', label: 'Übersicht' },
-  { href: '/app/overlays', label: 'Overlays' },
-  { href: '/app/community', label: 'Community' },
-  { href: '/app/billing', label: 'Billing' },
-  { href: '/app/settings', label: 'Settings' }
+  { href: '/', label: 'Übersicht' },
+  { href: '/overlays', label: 'Overlays' },
+  { href: '/community', label: 'Community' },
+  { href: '/billing', label: 'Billing' },
+  { href: '/settings', label: 'Settings' }
 ];
 
 export default function AppLayout({
