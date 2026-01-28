@@ -1,3 +1,5 @@
+import ModuleCard from '@/components/ModuleCard';
+
 const communityTracks = [
   {
     title: 'Slot Requests',
@@ -31,13 +33,7 @@ export default function CommunityPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {communityTracks.map((track) => (
-          <div
-            key={track.title}
-            className="rounded-2xl border border-white/10 bg-slate-900/70 p-6"
-          >
-            <p className="text-sm font-semibold text-white">{track.title}</p>
-            <p className="mt-2 text-xs text-slate-300">{track.detail}</p>
-          </div>
+          <ModuleCard key={track.title} {...track} />
         ))}
       </div>
     </section>

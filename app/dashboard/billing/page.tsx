@@ -1,3 +1,5 @@
+import ModuleCard from '@/components/ModuleCard';
+
 const billingPlans = [
   {
     title: 'Creator',
@@ -31,13 +33,7 @@ export default function BillingPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {billingPlans.map((plan) => (
-          <div
-            key={plan.title}
-            className="rounded-2xl border border-white/10 bg-slate-900/70 p-6"
-          >
-            <p className="text-sm font-semibold text-white">{plan.title}</p>
-            <p className="mt-2 text-xs text-slate-300">{plan.detail}</p>
-          </div>
+          <ModuleCard key={plan.title} {...plan} />
         ))}
       </div>
     </section>

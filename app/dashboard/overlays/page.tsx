@@ -1,7 +1,18 @@
+import ModuleCard from '@/components/ModuleCard';
+
 const overlaySteps = [
-  'Overlay Presets definieren',
-  'Token-Management & Zugriffsschutz',
-  'Live Preview + Szenenverwaltung'
+  {
+    title: 'Overlay Presets',
+    detail: 'Kern-Layouts definieren und als Preset-Bausteine speichern.'
+  },
+  {
+    title: 'Token & Zugriff',
+    detail: 'Sichere Overlay-Tokens und Zugriffsschutz für OBS-URLs.'
+  },
+  {
+    title: 'Live Preview',
+    detail: 'Szenenverwaltung mit Live-Vorschau und Test-Events.'
+  }
 ];
 
 export default function OverlaysPage() {
@@ -22,12 +33,7 @@ export default function OverlaysPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {overlaySteps.map((step) => (
-          <div
-            key={step}
-            className="rounded-2xl border border-white/10 bg-slate-900/70 p-6 text-sm text-slate-200"
-          >
-            {step}
-          </div>
+          <ModuleCard key={step.title} {...step} />
         ))}
       </div>
     </section>
