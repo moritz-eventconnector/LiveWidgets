@@ -2,14 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+* {
+  @apply antialiased;
 }
 
 body {
-  @apply bg-obs-black text-white antialiased;
+  @apply bg-slate-950 text-white;
 }
 
 a {
-  @apply text-obs-accent;
+  @apply text-indigo-300 hover:text-indigo-200;
+}
+
+::selection {
+  @apply bg-indigo-500/30 text-white;
 }
