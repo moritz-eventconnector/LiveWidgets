@@ -5,8 +5,10 @@ export default withAuth(
   function middleware(request) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-pathname', request.nextUrl.pathname);
-    const appDomain = process.env.APP_DOMAIN ?? 'app.livewidgets.de';
-    const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${appDomain}`;
+    const appBaseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ??
+      `https://${process.env.APP_DOMAIN ?? 'app.livewidgets.de'}`;
+    const appDomain = new URL(appBaseUrl).hostname;
     const isAppHost = request.nextUrl.hostname === appDomain;
 
     const isAuthRoute = request.nextUrl.pathname.startsWith('/auth');
@@ -40,7 +42,10 @@ export default withAuth(
     },
     callbacks: {
       authorized({ req, token }) {
-        const appDomain = process.env.APP_DOMAIN ?? 'app.livewidgets.de';
+        const appBaseUrl =
+          process.env.NEXT_PUBLIC_APP_URL ??
+          `https://${process.env.APP_DOMAIN ?? 'app.livewidgets.de'}`;
+        const appDomain = new URL(appBaseUrl).hostname;
         if (req.nextUrl.hostname !== appDomain) {
           return true;
         }
