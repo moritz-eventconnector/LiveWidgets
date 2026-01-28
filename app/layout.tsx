@@ -1,25 +1,20 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import ClientRuntimeLogger from '@/components/ClientRuntimeLogger';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
-
 export const metadata: Metadata = {
-  title: 'LiveWidgets – Interactive Twitch Overlays',
+  title: 'LiveWidgets',
   description:
-    'Interaktive OBS-Overlays & Twitch-Widgets für Bonushunts, Slot Requests & Tournaments.',
+    'Ein frischer Neustart für interaktive Twitch-Overlays, Community-Features und Creator-Tools.',
   icons: {
     icon: '/favicon.ico'
   },
   openGraph: {
-    title: 'LiveWidgets – Interactive Twitch Overlays',
+    title: 'LiveWidgets',
     description:
-      'Interaktive OBS-Overlays & Twitch-Widgets für Bonushunts, Slot Requests & Tournaments.',
+      'Ein frischer Neustart für interaktive Twitch-Overlays, Community-Features und Creator-Tools.',
     url: 'https://livewidgets.de',
     siteName: 'LiveWidgets',
     type: 'website'
@@ -32,10 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="de" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ClientRuntimeLogger />
-        {children}
+    <html lang="de" className={inter.className}>
+      <body>
+        <div className="min-h-screen bg-slate-950 text-white">
+          {children}
+        </div>
       </body>
     </html>
   );
