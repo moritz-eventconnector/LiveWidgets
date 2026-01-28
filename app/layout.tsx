@@ -1,8 +1,5 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'LiveWidgets',
@@ -27,8 +24,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="de" className={inter.className}>
-      <body className="min-h-screen bg-slate-950 text-white">{children}</body>
+    <html lang="de">
+      <body className="min-h-screen bg-slate-950 font-sans text-white">
+        {children}
+      </body>
     </html>
   );
 }
