@@ -10,11 +10,15 @@ export default withAuth(
     const isAppHost = request.nextUrl.hostname === appDomain;
 
     const isAuthRoute = request.nextUrl.pathname.startsWith('/auth');
+    const isLandingRoute =
+      request.nextUrl.pathname === '/' ||
+      request.nextUrl.pathname.startsWith('/landing');
 
     if (
       isAppHost &&
       !isAuthRoute &&
-      !request.nextUrl.pathname.startsWith('/app')
+      !request.nextUrl.pathname.startsWith('/app') &&
+      !isLandingRoute
     ) {
       const rewriteUrl = request.nextUrl.clone();
       const normalizedPath =
