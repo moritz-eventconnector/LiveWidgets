@@ -1,38 +1,70 @@
-import SectionCard from '@/components/SectionCard';
+import ModuleCard from '@/components/ModuleCard';
 
-export default function AppOverview() {
+const pulseStats = [
+  {
+    title: 'Live Overlays',
+    detail: '3 Szenen aktiv · letzte Aktualisierung vor 4 Minuten'
+  },
+  {
+    title: 'Community Queue',
+    detail: '12 Requests offen · 2 Bonus Hunts geplant'
+  },
+  {
+    title: 'Revenue Snapshot',
+    detail: '1.240€ Umsatz · 6 aktive Subscriber'
+  }
+];
+
+const nextActions = [
+  {
+    title: 'Overlay-Editor vorbereiten',
+    detail: 'Preset-Struktur und Token-Strategie finalisieren.'
+  },
+  {
+    title: 'Community Automationen',
+    detail: 'Slot-Request Regeln und Turnier-Queue definieren.'
+  },
+  {
+    title: 'Billing-Setup',
+    detail: 'Stripe-Planlogik und Trial-Flow abstimmen.'
+  }
+];
+
+export default function AppHome() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Overview</h1>
-        <p className="mt-2 text-sm text-white/70">
-          Dein Channel Workspace, Subscription-Status und Live-Links auf einen Blick.
+    <div className="flex flex-col gap-8">
+      <header className="space-y-3">
+        <h2 className="text-xl font-semibold text-white">
+          Willkommen zurück, Team Neon Lotus
+        </h2>
+        <p className="text-sm text-slate-300">
+          Diese Übersicht bündelt den Status der wichtigsten Module. Sobald die
+          Auth aktiviert ist, landen Creator hier als Startpunkt.
         </p>
-      </div>
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <SectionCard title="Subscription" description="Aktiv · Creator">
-          <div className="text-sm text-white/60">
-            Nächste Abrechnung: 12.09.2024
-          </div>
-        </SectionCard>
-        <SectionCard title="Overlay Links" description="Sichere Token-URLs">
-          <ul className="text-sm text-white/70">
-            <li>/overlay/bonushunt/{'{channel}'}?token=••••</li>
-            <li>/overlay/slot-requests/{'{channel}'}?token=••••</li>
-            <li>/overlay/tournament/{'{tournamentId}'}?token=••••</li>
-          </ul>
-        </SectionCard>
-        <SectionCard title="Twitch Bot" description="Verbunden als LiveWidgetsBot">
-          <div className="text-sm text-white/60">Status: online</div>
-        </SectionCard>
-      </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        {pulseStats.map((item) => (
+          <ModuleCard key={item.title} {...item} />
+        ))}
+      </section>
 
-      <SectionCard title="Feature Flags" description="Creator+ Optionen">
-        <div className="text-sm text-white/70">
-          Website-Baukasten: deaktiviert (Creator+).
-        </div>
-      </SectionCard>
+      <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+        <h3 className="text-lg font-semibold text-white">
+          Nächste Schritte für die Produktiv-Schaltung
+        </h3>
+        <ul className="mt-4 grid gap-3 text-sm text-slate-200 md:grid-cols-3">
+          {nextActions.map((item) => (
+            <li
+              key={item.title}
+              className="rounded-xl border border-white/10 bg-slate-900/70 p-4"
+            >
+              <p className="text-sm font-semibold text-white">{item.title}</p>
+              <p className="mt-2 text-xs text-slate-300">{item.detail}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

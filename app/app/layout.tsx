@@ -1,39 +1,55 @@
-import DashboardNav from '@/components/DashboardNav';
-import SubscriptionGate from '@/components/SubscriptionGate';
-import { getSessionUser, getChannelForUser } from '@/lib/access';
-import { headers } from 'next/headers';
+import Link from 'next/link';
 
-export default async function AppLayout({
+const navItems = [
+  { href: '/app', label: 'Übersicht' },
+  { href: '/app/overlays', label: 'Overlays' },
+  { href: '/app/community', label: 'Community' },
+  { href: '/app/billing', label: 'Billing' },
+  { href: '/app/settings', label: 'Settings' }
+];
+
+export default function AppLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = headers().get('x-pathname') ?? '';
-  const allowInactive = pathname === '/app/billing';
-  const user = await getSessionUser();
-  const channel = user ? await getChannelForUser(user.id) : null;
-
   return (
-    <div className="flex min-h-screen bg-obs-black text-white">
-      <DashboardNav />
-      <main className="flex-1 px-6 py-8 md:px-10">
-        {!channel ? (
-          <div className="rounded-2xl border border-white/10 bg-obs-card p-6 text-sm text-white/70">
-            Kein Channel Workspace gefunden. Bitte melde dich erneut mit Twitch an.
+    <div className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-16 pt-10">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-indigo-300">
+              Creator Dashboard
+            </p>
+            <h1 className="text-2xl font-semibold text-white">
+              LiveWidgets App-Workspace
+            </h1>
+            <p className="text-sm text-slate-300">
+              Grundstruktur für app.livewidgets.de – Auth kommt als nächster
+              Schritt.
+            </p>
           </div>
-        ) : channel.adminDisabled ? (
-          <div className="rounded-2xl border border-white/10 bg-obs-card p-6 text-sm text-white/70">
-            Dieser Channel ist derzeit gesperrt. Bitte kontaktiere den Support.
+          <div className="rounded-full border border-white/10 bg-slate-900/60 px-4 py-2 text-xs text-slate-200">
+            Workspace: Neon Lotus
           </div>
-        ) : (
-          <SubscriptionGate
-            status={channel.subscriptionStatus}
-            allowInactive={allowInactive}
-          >
-            {children}
-          </SubscriptionGate>
-        )}
-      </main>
+        </header>
+
+        <nav className="flex flex-wrap gap-3">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 transition hover:border-indigo-400/60 hover:text-white"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
