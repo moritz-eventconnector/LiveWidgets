@@ -17,11 +17,6 @@ services:
       - "traefik.http.routers.livewidgets.tls.certresolver=letsencrypt"
       - "traefik.http.routers.livewidgets.service=livewidgets"
       - "traefik.http.services.livewidgets.loadbalancer.server.port=3000"
-      - "traefik.http.routers.livewidgets-app.rule=Host(`${APP_DOMAIN}`)"
-      - "traefik.http.routers.livewidgets-app.entrypoints=websecure"
-      - "traefik.http.routers.livewidgets-app.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.livewidgets-app.service=livewidgets-app"
-      - "traefik.http.services.livewidgets-app.loadbalancer.server.port=3000"
     networks:
       - web
       - internal
@@ -54,11 +49,6 @@ services:
       - "traefik.http.routers.livewidgets-socket.tls.certresolver=letsencrypt"
       - "traefik.http.routers.livewidgets-socket.service=livewidgets-socket"
       - "traefik.http.services.livewidgets-socket.loadbalancer.server.port=3001"
-      - "traefik.http.routers.livewidgets-app-socket.rule=Host(`${APP_DOMAIN}`) && PathPrefix(`/socket`)"
-      - "traefik.http.routers.livewidgets-app-socket.entrypoints=websecure"
-      - "traefik.http.routers.livewidgets-app-socket.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.livewidgets-app-socket.service=livewidgets-app-socket"
-      - "traefik.http.services.livewidgets-app-socket.loadbalancer.server.port=3001"
     networks:
       - web
       - internal

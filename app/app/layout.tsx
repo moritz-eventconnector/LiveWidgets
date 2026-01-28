@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const navItems = [
-  { href: '/', label: 'Übersicht' },
+  { href: '/', label: 'Dashboard' },
   { href: '/overlays', label: 'Overlays' },
   { href: '/community', label: 'Community' },
   { href: '/billing', label: 'Billing' },
@@ -19,18 +19,16 @@ export default function AppLayout({
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-indigo-300">
-              Creator Dashboard
+              Creator Workspace
             </p>
-            <h1 className="text-2xl font-semibold text-white">
-              LiveWidgets App-Workspace
-            </h1>
+            <h1 className="text-2xl font-semibold text-white">LiveWidgets</h1>
             <p className="text-sm text-slate-300">
-              Grundstruktur für app.livewidgets.de – Auth kommt als nächster
-              Schritt.
+              Ein Raum für deine Live-Show: Overlays, Community-Flow und
+              Monetarisierung greifen hier ineinander.
             </p>
           </div>
           <div className="rounded-full border border-white/10 bg-slate-900/60 px-4 py-2 text-xs text-slate-200">
-            Workspace: Neon Lotus
+            Workspace: Neon Lotus · Creator Plan
           </div>
         </header>
 
