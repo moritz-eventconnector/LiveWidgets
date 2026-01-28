@@ -51,6 +51,8 @@ const faqs = [
 ];
 
 export default function HomePage() {
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.livewidgets.de';
+
   return (
     <div className="min-h-screen bg-obs-black text-white">
       <header className="flex items-center justify-between px-6 py-6 md:px-16">
@@ -59,7 +61,7 @@ export default function HomePage() {
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
           <a
-            href="/app"
+            href={appBaseUrl}
             className="rounded-full bg-obs-accent px-4 py-2 text-white"
           >
             Login
@@ -83,7 +85,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="/app"
+                href={appBaseUrl}
                 className="rounded-full bg-obs-accent px-6 py-3 text-sm font-semibold text-white"
               >
                 Get Started
@@ -135,7 +137,7 @@ export default function HomePage() {
                 <li>OBS Overlays</li>
               </ul>
               <a
-                href="/app"
+                href={appBaseUrl}
                 className="mt-6 inline-flex rounded-full bg-obs-accent px-5 py-2 text-sm font-semibold"
               >
                 Starten
@@ -150,7 +152,7 @@ export default function HomePage() {
                 <li>Feature-Flag aktivierbar</li>
               </ul>
               <a
-                href="/app"
+                href={appBaseUrl}
                 className="mt-6 inline-flex rounded-full border border-white/20 px-5 py-2 text-sm font-semibold"
               >
                 Upgrade

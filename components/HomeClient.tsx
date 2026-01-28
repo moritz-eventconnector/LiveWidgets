@@ -52,6 +52,7 @@ const faqs = [
 
 export default function HomeClient() {
   const currentYear = 2024;
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.livewidgets.de';
 
   return (
     <div className="min-h-screen bg-obs-black text-white">
@@ -61,7 +62,7 @@ export default function HomeClient() {
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
           <a
-            href="/app"
+            href={appBaseUrl}
             className="rounded-full bg-obs-accent px-4 py-2 text-white"
           >
             Login
@@ -85,7 +86,7 @@ export default function HomeClient() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="/app"
+                href={appBaseUrl}
                 className="rounded-full bg-obs-accent px-6 py-3 text-sm font-semibold text-white"
               >
                 Get Started
@@ -137,7 +138,7 @@ export default function HomeClient() {
                 <li>OBS Overlays</li>
               </ul>
               <a
-                href="/app"
+                href={appBaseUrl}
                 className="mt-6 inline-flex rounded-full bg-obs-accent px-5 py-2 text-sm font-semibold"
               >
                 Starten
@@ -152,7 +153,7 @@ export default function HomeClient() {
                 <li>Feature-Flag aktivierbar</li>
               </ul>
               <a
-                href="/app"
+                href={appBaseUrl}
                 className="mt-6 inline-flex rounded-full border border-white/20 px-5 py-2 text-sm font-semibold"
               >
                 Upgrade
