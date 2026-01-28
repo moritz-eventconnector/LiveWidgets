@@ -9,7 +9,13 @@ export default withAuth(
     const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${appDomain}`;
     const isAppHost = request.nextUrl.hostname === appDomain;
 
-    if (isAppHost && !request.nextUrl.pathname.startsWith('/app')) {
+    const isAuthRoute = request.nextUrl.pathname.startsWith('/auth');
+
+    if (
+      isAppHost &&
+      !isAuthRoute &&
+      !request.nextUrl.pathname.startsWith('/app')
+    ) {
       const rewriteUrl = request.nextUrl.clone();
       const normalizedPath =
         request.nextUrl.pathname === '/' ? '' : request.nextUrl.pathname;
