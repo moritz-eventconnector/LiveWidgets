@@ -21,6 +21,15 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/app',
+        permanent: false
+      }
+    ];
   }
 };
 

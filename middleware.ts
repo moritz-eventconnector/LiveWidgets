@@ -5,6 +5,9 @@ export default withAuth(
   function middleware(request) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-pathname', request.nextUrl.pathname);
+    if (request.nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/app', request.url));
+    }
     return NextResponse.next({ request: { headers: requestHeaders } });
   },
   {
@@ -15,5 +18,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/app/:path*', '/admin/:path*']
+  matcher: ['/', '/app/:path*', '/admin/:path*']
 };
