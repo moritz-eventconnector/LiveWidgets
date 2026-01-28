@@ -128,6 +128,8 @@ generate_secret() {
 }
 
 DOMAIN=$(prompt_with_default "DOMAIN (example: livewidgets.de)" "$(get_env_value "DOMAIN" || true)")
+APP_DOMAIN_DEFAULT="app.${DOMAIN}"
+APP_DOMAIN=$(prompt_with_default "APP_DOMAIN (example: app.livewidgets.de)" "$APP_DOMAIN_DEFAULT")
 LETSENCRYPT_EMAIL=$(prompt_with_default "LETSENCRYPT_EMAIL" "$(get_env_value "LETSENCRYPT_EMAIL" || true)")
 POSTGRES_PASSWORD_DEFAULT=$(get_env_value "POSTGRES_PASSWORD" || true)
 existing_postgres_volume=false
@@ -197,9 +199,11 @@ if [[ -f .env ]]; then
 fi
 
 cat <<ENV > .env
-APP_URL=https://${DOMAIN}
+APP_URL=https://${APP_DOMAIN}
+APP_DOMAIN=${APP_DOMAIN}
 DOMAIN=${DOMAIN}
-NEXT_PUBLIC_SOCKET_URL=https://${DOMAIN}
+NEXT_PUBLIC_APP_URL=https://${APP_DOMAIN}
+NEXT_PUBLIC_SOCKET_URL=https://${APP_DOMAIN}
 SOCKET_SERVER_PORT=3001
 DATABASE_URL=postgresql://livewidgets:${POSTGRES_PASSWORD}@postgres:5432/livewidgets
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -207,7 +211,7 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=${REDIS_PASSWORD}
 NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-NEXTAUTH_URL=https://${DOMAIN}
+NEXTAUTH_URL=https://${APP_DOMAIN}
 TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
 TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
 BOT_TWITCH_USERNAME=${BOT_TWITCH_USERNAME}
