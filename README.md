@@ -6,6 +6,7 @@ Billing-Workflows.
 
 ## Status
 - ✅ Neue UI-Grundstruktur für Landing und Dashboard-Preview.
+- ✅ Dashboard-Navigation mit Modul-Platzhaltern (Overlays, Community, Billing).
 - ⏳ Realtime Gateway + Event-Bus in Vorbereitung.
 - ⏳ Auth, Billing und Workspace-Module folgen nach dem Datenmodell.
 
