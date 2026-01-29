@@ -36,10 +36,11 @@ export default function LoginPage() {
             <div className="space-y-4 text-sm text-slate-300">
               <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
                 <p className="text-xs uppercase tracking-[0.3em] text-indigo-300">
-                  Twitch OAuth
+                  Authentik Login
                 </p>
                 <p className="mt-2 text-sm">
-                  Die OAuth-Anbindung wird im nächsten Schritt integriert.
+                  Melde dich über deinen Authentik-Account an und starte direkt
+                  im Creator-Dashboard.
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
@@ -47,18 +48,17 @@ export default function LoginPage() {
                   Creator Zugang
                 </p>
                 <p className="mt-2 text-sm">
-                  Login ist aktuell nicht aktiv, aber das Layout steht für den
-                  finalen Flow bereit.
+                  Weitere Login-Optionen folgen, sobald das neue Auth-Setup
+                  komplett ist.
                 </p>
               </div>
             </div>
-            <button
-              className="w-full rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-semibold text-white/60"
-              disabled
-              type="button"
+            <a
+              className="block w-full rounded-full border border-indigo-400/60 bg-indigo-500/20 px-6 py-3 text-center text-sm font-semibold text-white transition hover:border-indigo-300 hover:bg-indigo-500/40"
+              href="/api/auth/signin/authentik"
             >
-              Login wird aktiviert
-            </button>
+              Mit Authentik anmelden
+            </a>
           </div>
 
           <div className="space-y-4">

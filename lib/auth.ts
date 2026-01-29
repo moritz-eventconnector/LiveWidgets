@@ -1,5 +1,6 @@
 import NextAuth, { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import OIDCProvider from 'next-auth/providers/oidc';
 import TwitchProvider from 'next-auth/providers/twitch';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { compare } from 'bcryptjs';
@@ -11,6 +12,13 @@ import { fetchTwitchProfile } from '@/lib/twitch';
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
+    OIDCProvider({
+      id: 'authentik',
+      name: 'Authentik',
+      issuer: env.AUTHENTIK_ISSUER,
+      clientId: env.AUTHENTIK_CLIENT_ID,
+      clientSecret: env.AUTHENTIK_CLIENT_SECRET
+    }),
     TwitchProvider({
       clientId: env.TWITCH_CLIENT_ID,
       clientSecret: env.TWITCH_CLIENT_SECRET,
@@ -97,7 +105,7 @@ export const authOptions: NextAuthOptions = {
     }
   },
   pages: {
-    signIn: '/auth/login'
+    signIn: '/login'
   }
 };
 
