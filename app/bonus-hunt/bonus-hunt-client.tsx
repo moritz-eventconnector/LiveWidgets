@@ -82,21 +82,8 @@ const huntStatusLabels: Record<HuntStatus, string> = {
   done: 'Vergangen'
 };
 
-const storageKey = 'livewidgets.bonus-hunts.v1';
-
-const emptyHuntSettings: HuntSettings = {
-  title: 'Bonus Hunt',
-  startBalance: '',
-  targetCashout: '',
-  currency: '€'
-};
-
-const buildSummary = (settings: HuntSettings, huntSlots: BonusSlot[]) => {
-  const balance = settings.startBalance
-    ? `${settings.startBalance} ${settings.currency}`
-    : '—';
-  return `${huntSlots.length} Slots · ${balance} Startbalance`;
-};
+const storageKeyForHunt = (huntId: string) =>
+  `livewidgets:bonus-hunt:${huntId}`;
 
 const initialHunts: BonusHuntEntry[] = [
   {
@@ -190,38 +177,7 @@ export default function BonusHuntClient({
   const [slots, setSlots] = useState<BonusSlot[]>(
     initialHunts[0]?.slots ?? []
   );
-  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem(storageKey);
-    if (!stored) {
-      setHasLoadedStorage(true);
-      return;
-    }
-    try {
-      const parsed = JSON.parse(stored) as {
-        hunts?: BonusHuntEntry[];
-        activeHuntId?: string;
-      };
-      if (!parsed?.hunts || parsed.hunts.length === 0) {
-        setHasLoadedStorage(true);
-        return;
-      }
-      const fallbackHunt = parsed.hunts[0];
-      const selectedHunt =
-        parsed.hunts.find((hunt) => hunt.id === parsed.activeHuntId) ??
-        fallbackHunt;
-      setHunts(parsed.hunts);
-      setActiveHuntId(selectedHunt?.id ?? '');
-      setHuntSettings(selectedHunt?.settings ?? emptyHuntSettings);
-      setSlots(selectedHunt?.slots ?? []);
-    } catch (error) {
-      console.warn('Bonus Hunt Speicher konnte nicht geladen werden.', error);
-    } finally {
-      setHasLoadedStorage(true);
-    }
-  }, []);
+  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
 
   const progress = useMemo(() => {
     const total = slots.length;
@@ -254,9 +210,16 @@ export default function BonusHuntClient({
     return ((progress.payoutTotal - start) / start) * 100;
   }, [huntSettings.startBalance, progress.payoutTotal]);
 
-  const overlayUrl = overlayToken
-    ? `${baseUrl}/overlay/bonus-hunt?token=${overlayToken}`
-    : `${baseUrl}/overlay/bonus-hunt`;
+  const overlayUrl = useMemo(() => {
+    const url = new URL(`${baseUrl}/overlay/bonus-hunt`);
+    if (overlayToken) {
+      url.searchParams.set('token', overlayToken);
+    }
+    if (activeHuntId) {
+      url.searchParams.set('hunt', activeHuntId);
+    }
+    return url.toString();
+  }, [activeHuntId, baseUrl, overlayToken]);
   const tipsUrl = channelSlug
     ? `${baseUrl}/bonus-hunt/${channelSlug}/tipps`
     : `${baseUrl}/bonus-hunt/tipps`;
@@ -319,6 +282,23 @@ export default function BonusHuntClient({
   const handleSelectHunt = (id: string) => {
     const hunt = hunts.find((entry) => entry.id === id);
     if (!hunt) return;
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem(storageKeyForHunt(id));
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as {
+            settings?: HuntSettings;
+            slots?: BonusSlot[];
+          };
+          setActiveHuntId(id);
+          setHuntSettings(parsed.settings ?? hunt.settings);
+          setSlots(parsed.slots ?? hunt.slots);
+          return;
+        } catch {
+          // ignore parse errors and fall back to stored hunt
+        }
+      }
+    }
     setActiveHuntId(id);
     setHuntSettings(hunt.settings);
     setSlots(hunt.slots);
@@ -351,47 +331,58 @@ export default function BonusHuntClient({
     setSlots([]);
   };
 
-  const handleDeleteHunt = (id: string) => {
-    setHunts((prev) => {
-      const nextHunts = prev.filter((hunt) => hunt.id !== id);
-      if (id === activeHuntId) {
-        const fallback = nextHunts[0];
-        setActiveHuntId(fallback?.id ?? '');
-        setHuntSettings(
-          fallback?.settings ?? emptyHuntSettings
-        );
-        setSlots(fallback?.slots ?? []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!activeHuntId || hasLoadedFromStorage) return;
+    const stored = window.localStorage.getItem(storageKeyForHunt(activeHuntId));
+    if (!stored) {
+      setHasLoadedFromStorage(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as {
+        settings?: HuntSettings;
+        slots?: BonusSlot[];
+      };
+      if (parsed.settings) {
+        setHuntSettings(parsed.settings);
       }
-      return nextHunts;
-    });
-  };
+      if (parsed.slots) {
+        setSlots(parsed.slots);
+      }
+    } catch {
+      // ignore parse errors
+    } finally {
+      setHasLoadedFromStorage(true);
+    }
+  }, [activeHuntId, hasLoadedFromStorage]);
 
   useEffect(() => {
-    if (!hasLoadedStorage) return;
+    if (typeof window === 'undefined') return;
+    if (!activeHuntId) return;
+    const payload = JSON.stringify({
+      settings: huntSettings,
+      slots
+    });
+    window.localStorage.setItem(storageKeyForHunt(activeHuntId), payload);
     setHunts((prev) =>
       prev.map((hunt) =>
         hunt.id === activeHuntId
           ? {
               ...hunt,
-              title: huntSettings.title,
               settings: huntSettings,
               slots,
-              updatedAt: 'Gerade eben',
-              summary: buildSummary(huntSettings, slots)
+              summary: slots.length
+                ? `${slots.length} Slots · ${huntSettings.startBalance || 0} ${
+                    huntSettings.currency
+                  } Startbalance`
+                : 'Noch keine Slots',
+              updatedAt: 'Gerade eben'
             }
           : hunt
       )
     );
-  }, [activeHuntId, hasLoadedStorage, huntSettings, slots]);
-
-  useEffect(() => {
-    if (!hasLoadedStorage || typeof window === 'undefined') return;
-    const payload = {
-      hunts,
-      activeHuntId
-    };
-    window.localStorage.setItem(storageKey, JSON.stringify(payload));
-  }, [activeHuntId, hasLoadedStorage, hunts]);
+  }, [activeHuntId, huntSettings, slots]);
 
   return (
     <CreatorShell
