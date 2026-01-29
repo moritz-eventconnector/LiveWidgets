@@ -1,3 +1,5 @@
+import LoginButton from './login-button';
+
 const highlights = [
   {
     title: 'Einfacher Einstieg',
@@ -53,12 +55,7 @@ export default function LoginPage() {
                 </p>
               </div>
             </div>
-            <a
-              className="block w-full rounded-full border border-indigo-400/60 bg-indigo-500/20 px-6 py-3 text-center text-sm font-semibold text-white transition hover:border-indigo-300 hover:bg-indigo-500/40"
-              href="/api/auth/signin/authentik"
-            >
-              Mit Authentik anmelden
-            </a>
+            <LoginButton />
           </div>
 
           <div className="space-y-4">
