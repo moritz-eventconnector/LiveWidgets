@@ -1,6 +1,16 @@
 import Stripe from 'stripe';
-import { env } from '@/lib/env';
+import { getEnv } from '@/lib/env';
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-06-20'
-});
+let stripeClient: Stripe | null = null;
+
+export const getStripe = () => {
+  if (stripeClient) {
+    return stripeClient;
+  }
+
+  const env = getEnv();
+  stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-06-20'
+  });
+  return stripeClient;
+};

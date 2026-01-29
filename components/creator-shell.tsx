@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { getServerSession } from 'next-auth';
-
-import { authOptions } from '@/lib/auth';
 import AuthUserMenu from '@/components/auth-user-menu';
 
 const navItems = [
@@ -25,9 +23,12 @@ export default async function CreatorShell({
   title = 'Creator Dashboard',
   subtitle = 'Plane, steuere und präsentiere deine Module – alles an einem Ort.'
 }: CreatorShellProps) {
-  const session = process.env.NEXTAUTH_SECRET
-    ? await getServerSession(authOptions)
-    : null;
+  let session = null;
+
+  if (process.env.NEXTAUTH_SECRET) {
+    const { getAuthOptions } = await import('@/lib/auth');
+    session = await getServerSession(getAuthOptions());
+  }
   const user = session?.user ?? null;
 
   return (

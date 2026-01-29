@@ -21,23 +21,42 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().optional()
 });
 
-export const env = envSchema.parse({
-  APP_URL: process.env.APP_URL,
-  DATABASE_URL: process.env.DATABASE_URL,
-  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-  STRIPE_PRICE_ID_CREATOR: process.env.STRIPE_PRICE_ID_CREATOR,
-  STRIPE_PRICE_ID_CREATOR_PLUS: process.env.STRIPE_PRICE_ID_CREATOR_PLUS,
-  TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
-  TWITCH_CLIENT_SECRET: process.env.TWITCH_CLIENT_SECRET,
-  AUTHENTIK_ISSUER: process.env.AUTHENTIK_ISSUER,
-  AUTHENTIK_CLIENT_ID: process.env.AUTHENTIK_CLIENT_ID,
-  AUTHENTIK_CLIENT_SECRET: process.env.AUTHENTIK_CLIENT_SECRET,
-  BOT_TWITCH_USERNAME: process.env.BOT_TWITCH_USERNAME,
-  BOT_TWITCH_OAUTH_TOKEN: process.env.BOT_TWITCH_OAUTH_TOKEN,
-  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL,
-  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD
-});
+export type Env = z.infer<typeof envSchema>;
+
+let cachedEnv: Env | null = null;
+
+export const getEnv = (): Env => {
+  if (cachedEnv) {
+    return cachedEnv;
+  }
+
+  const parsed = envSchema.safeParse({
+    APP_URL: process.env.APP_URL,
+    DATABASE_URL: process.env.DATABASE_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_PRICE_ID_CREATOR: process.env.STRIPE_PRICE_ID_CREATOR,
+    STRIPE_PRICE_ID_CREATOR_PLUS: process.env.STRIPE_PRICE_ID_CREATOR_PLUS,
+    TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
+    TWITCH_CLIENT_SECRET: process.env.TWITCH_CLIENT_SECRET,
+    AUTHENTIK_ISSUER: process.env.AUTHENTIK_ISSUER,
+    AUTHENTIK_CLIENT_ID: process.env.AUTHENTIK_CLIENT_ID,
+    AUTHENTIK_CLIENT_SECRET: process.env.AUTHENTIK_CLIENT_SECRET,
+    BOT_TWITCH_USERNAME: process.env.BOT_TWITCH_USERNAME,
+    BOT_TWITCH_OAUTH_TOKEN: process.env.BOT_TWITCH_OAUTH_TOKEN,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD
+  });
+
+  if (!parsed.success) {
+    const error = new Error('Missing required environment variables.');
+    (error as Error & { cause?: unknown }).cause = parsed.error;
+    throw error;
+  }
+
+  cachedEnv = parsed.data;
+  return cachedEnv;
+};
