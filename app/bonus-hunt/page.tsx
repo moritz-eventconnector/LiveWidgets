@@ -1,4 +1,5 @@
 import BonusHuntClient from './bonus-hunt-client';
+import CreatorShell from '@/components/creator-shell';
 
 export default async function BonusHuntPage() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://livewidgets.de';
@@ -11,10 +12,15 @@ export default async function BonusHuntPage() {
   }
 
   return (
-    <BonusHuntClient
-      baseUrl={baseUrl}
-      overlayToken={channel?.overlayToken ?? null}
-      channelSlug={channel?.slug ?? null}
-    />
+    <CreatorShell
+      title="Bonus Hunt"
+      subtitle="Freispiele sauber tracken, Ergebnisse teilen und deinen Chat aktiv einbinden."
+    >
+      <BonusHuntClient
+        baseUrl={baseUrl}
+        overlayToken={channel?.overlayToken ?? null}
+        channelSlug={channel?.slug ?? null}
+      />
+    </CreatorShell>
   );
 }

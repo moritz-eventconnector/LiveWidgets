@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import CreatorShell from '../../components/creator-shell';
-
 const workflowStages = [
   {
     title: 'Slots erfassen',
@@ -416,427 +414,414 @@ export default function BonusHuntClient({
   }, [activeHuntId, huntSettings, slots]);
 
   return (
-    <CreatorShell
-      title="Bonus Hunt"
-      subtitle="Freispiele sauber tracken, Ergebnisse teilen und deinen Chat aktiv einbinden."
-    >
-      <div className="flex flex-col gap-8">
-        <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Deine Bonus Hunts
-              </h2>
-              <p className="text-sm text-slate-300">
-                Sieh vergangene, vorbereitete und aktive Hunts auf einen Blick.
-              </p>
-            </div>
-            <button
-              className="rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-white"
-              type="button"
-              onClick={handleCreateHunt}
-            >
-              Neuen Hunt erstellen
-            </button>
+    <div className="flex flex-col gap-8">
+      <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">
+              Deine Bonus Hunts
+            </h2>
+            <p className="text-sm text-slate-300">
+              Sieh vergangene, vorbereitete und aktive Hunts auf einen Blick.
+            </p>
           </div>
+          <button
+            className="rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-white"
+            type="button"
+            onClick={handleCreateHunt}
+          >
+            Neuen Hunt erstellen
+          </button>
+        </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {hunts.map((hunt) => (
-              <button
-                key={hunt.id}
-                className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
-                  hunt.id === activeHuntId
-                    ? 'border-indigo-400/60 bg-indigo-500/10'
-                    : 'border-white/10 bg-slate-900/70 hover:border-indigo-400/40 hover:bg-slate-900/90'
-                }`}
-                type="button"
-                onClick={() => handleSelectHunt(hunt.id)}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-white">
-                    {hunt.title}
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200">
-                    {huntStatusLabels[hunt.status]}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">{hunt.summary}</p>
-                <p className="text-xs text-slate-500">{hunt.updatedAt}</p>
-                <span className="mt-2 flex justify-end">
-                  <span
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
-                    role="button"
-                    tabIndex={0}
-                    onClick={(event) => {
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {hunts.map((hunt) => (
+            <button
+              key={hunt.id}
+              className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
+                hunt.id === activeHuntId
+                  ? 'border-indigo-400/60 bg-indigo-500/10'
+                  : 'border-white/10 bg-slate-900/70 hover:border-indigo-400/40 hover:bg-slate-900/90'
+              }`}
+              type="button"
+              onClick={() => handleSelectHunt(hunt.id)}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-white">
+                  {hunt.title}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200">
+                  {huntStatusLabels[hunt.status]}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">{hunt.summary}</p>
+              <p className="text-xs text-slate-500">{hunt.updatedAt}</p>
+              <span className="mt-2 flex justify-end">
+                <span
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+                  role="button"
+                  tabIndex={0}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleDeleteHunt(hunt.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
                       event.stopPropagation();
                       handleDeleteHunt(hunt.id);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        handleDeleteHunt(hunt.id);
-                      }
-                    }}
-                  >
-                    Löschen
-                  </span>
+                    }
+                  }}
+                >
+                  Löschen
                 </span>
-              </button>
-            ))}
-          </div>
-        </section>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
 
-        <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-indigo-300">
-              Hunt Überblick
-            </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                Hunt Titel
+      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+          <p className="text-xs uppercase tracking-[0.3em] text-indigo-300">
+            Hunt Überblick
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              Hunt Titel
+              <input
+                className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
+                value={huntSettings.title}
+                onChange={(event) =>
+                  setHuntSettings((prev) => ({
+                    ...prev,
+                    title: event.target.value
+                  }))
+                }
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              Start Balance
+              <div className="flex items-center gap-2">
                 <input
-                  className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
-                  value={huntSettings.title}
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
+                  value={huntSettings.startBalance}
                   onChange={(event) =>
                     setHuntSettings((prev) => ({
                       ...prev,
-                      title: event.target.value
+                      startBalance: event.target.value
                     }))
+                  }
+                />
+                <span className="text-sm text-slate-300">
+                  {huntSettings.currency}
+                </span>
+              </div>
+            </label>
+            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              Ziel Cashout
+              <div className="flex items-center gap-2">
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
+                  value={huntSettings.targetCashout}
+                  onChange={(event) =>
+                    setHuntSettings((prev) => ({
+                      ...prev,
+                      targetCashout: event.target.value
+                    }))
+                  }
+                />
+                <span className="text-sm text-slate-300">
+                  {huntSettings.currency}
+                </span>
+              </div>
+            </label>
+            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              Währung
+              <select
+                className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
+                value={huntSettings.currency}
+                onChange={(event) =>
+                  setHuntSettings((prev) => ({
+                    ...prev,
+                    currency: event.target.value
+                  }))
+                }
+              >
+                <option value="€">Euro (€)</option>
+                <option value="$">US-Dollar ($)</option>
+                <option value="£">Pfund (£)</option>
+              </select>
+            </label>
+          </div>
+          <div className="mt-6 grid gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4 md:grid-cols-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Slots gesamt
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {progress.total}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Freispiele gesammelt
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {progress.collected}/{progress.totalTarget}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                Auszahlungen
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {progress.payoutTotal} {huntSettings.currency}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                ROI
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {roi.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {overlayLinks.map((overlay) => (
+            <div
+              key={overlay.label}
+              className="rounded-2xl border border-white/10 bg-slate-950/70 p-5"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-indigo-300">
+                {overlay.label}
+              </p>
+              <p className="mt-3 text-base font-semibold text-white break-all">
+                {overlay.value}
+              </p>
+              <p className="mt-1 text-xs text-slate-300">{overlay.note}</p>
+              <button
+                className="mt-4 w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+                type="button"
+                onClick={() => handleCopy(overlay.value)}
+                disabled={!overlayToken && overlay.label === 'OBS Overlay'}
+              >
+                {copiedValue === overlay.value
+                  ? 'Link kopiert'
+                  : 'Overlay URL kopieren'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">
+              Slots & Freispiele
+            </h2>
+            <p className="text-sm text-slate-300">
+              Halte fest, wie viele Freispiele gesammelt wurden und welche Slots
+              noch offen sind.
+            </p>
+          </div>
+          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-200">
+            {progress.done} von {progress.total} erledigt
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:grid-cols-6">
+          <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400 md:col-span-2">
+            Slot Name
+            <input
+              className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
+              value={slotDraft.name}
+              onChange={(event) =>
+                setSlotDraft((prev) => ({
+                  ...prev,
+                  name: event.target.value
+                }))
+              }
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+            Anbieter
+            <input
+              className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
+              value={slotDraft.provider}
+              onChange={(event) =>
+                setSlotDraft((prev) => ({
+                  ...prev,
+                  provider: event.target.value
+                }))
+              }
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+            Einsatz
+            <input
+              className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
+              value={slotDraft.stake}
+              onChange={(event) =>
+                setSlotDraft((prev) => ({
+                  ...prev,
+                  stake: event.target.value
+                }))
+              }
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+            Ziel Spins
+            <input
+              className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
+              value={slotDraft.targetSpins}
+              onChange={(event) =>
+                setSlotDraft((prev) => ({
+                  ...prev,
+                  targetSpins: event.target.value
+                }))
+              }
+            />
+          </label>
+          <div className="flex items-end">
+            <button
+              className="w-full rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-white"
+              type="button"
+              onClick={handleAddSlot}
+            >
+              Slot hinzufügen
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4">
+          {slots.map((slot) => (
+            <div
+              key={slot.id}
+              className="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 md:grid-cols-[1.4fr_1.1fr_repeat(4,_minmax(0,1fr))_auto]"
+            >
+              <div>
+                <p className="text-sm font-semibold text-white">{slot.name}</p>
+                <p className="text-xs text-slate-400">{slot.provider}</p>
+              </div>
+              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                Status
+                <select
+                  className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
+                  value={slot.status}
+                  onChange={(event) =>
+                    handleSlotChange(slot.id, 'status', event.target.value)
+                  }
+                >
+                  {(Object.keys(statusLabels) as SlotStatus[]).map((key) => (
+                    <option key={key} value={key}>
+                      {statusLabels[key]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                Einsatz
+                <input
+                  className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
+                  value={slot.stake}
+                  onChange={(event) =>
+                    handleSlotChange(slot.id, 'stake', event.target.value)
                   }
                 />
               </label>
               <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                Start Balance
-                <div className="flex items-center gap-2">
-                  <input
-                    className="w-full rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
-                    value={huntSettings.startBalance}
-                    onChange={(event) =>
-                      setHuntSettings((prev) => ({
-                        ...prev,
-                        startBalance: event.target.value
-                      }))
-                    }
-                  />
-                  <span className="text-sm text-slate-300">
-                    {huntSettings.currency}
-                  </span>
-                </div>
-              </label>
-              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                Ziel Cashout
-                <div className="flex items-center gap-2">
-                  <input
-                    className="w-full rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
-                    value={huntSettings.targetCashout}
-                    onChange={(event) =>
-                      setHuntSettings((prev) => ({
-                        ...prev,
-                        targetCashout: event.target.value
-                      }))
-                    }
-                  />
-                  <span className="text-sm text-slate-300">
-                    {huntSettings.currency}
-                  </span>
-                </div>
-              </label>
-              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                Währung
-                <select
-                  className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white"
-                  value={huntSettings.currency}
+                Ziel Spins
+                <input
+                  className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
+                  value={slot.targetSpins}
                   onChange={(event) =>
-                    setHuntSettings((prev) => ({
-                      ...prev,
-                      currency: event.target.value
-                    }))
+                    handleSlotChange(slot.id, 'targetSpins', event.target.value)
                   }
-                >
-                  <option value="€">Euro (€)</option>
-                  <option value="$">US-Dollar ($)</option>
-                  <option value="£">Pfund (£)</option>
-                </select>
+                />
               </label>
-            </div>
-            <div className="mt-6 grid gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4 md:grid-cols-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Slots gesamt
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {progress.total}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Freispiele gesammelt
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {progress.collected}/{progress.totalTarget}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Auszahlungen
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {progress.payoutTotal} {huntSettings.currency}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  ROI
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {roi.toFixed(1)}%
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {overlayLinks.map((overlay) => (
-              <div
-                key={overlay.label}
-                className="rounded-2xl border border-white/10 bg-slate-950/70 p-5"
-              >
-                <p className="text-xs uppercase tracking-[0.3em] text-indigo-300">
-                  {overlay.label}
-                </p>
-                <p className="mt-3 text-base font-semibold text-white break-all">
-                  {overlay.value}
-                </p>
-                <p className="mt-1 text-xs text-slate-300">{overlay.note}</p>
+              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                Gesammelt
+                <input
+                  className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
+                  value={slot.collectedSpins}
+                  onChange={(event) =>
+                    handleSlotChange(
+                      slot.id,
+                      'collectedSpins',
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                Auszahlung
+                <input
+                  className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
+                  value={slot.payout}
+                  onChange={(event) =>
+                    handleSlotChange(slot.id, 'payout', event.target.value)
+                  }
+                />
+              </label>
+              <div className="flex items-end">
                 <button
-                  className="mt-4 w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white"
                   type="button"
-                  onClick={() => handleCopy(overlay.value)}
-                  disabled={!overlayToken && overlay.label === 'OBS Overlay'}
+                  onClick={() => handleRemove(slot.id)}
                 >
-                  {copiedValue === overlay.value
-                    ? 'Link kopiert'
-                    : 'Overlay URL kopieren'}
+                  Entfernen
                 </button>
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Slots & Freispiele
-              </h2>
-              <p className="text-sm text-slate-300">
-                Halte fest, wie viele Freispiele gesammelt wurden und welche Slots
-                noch offen sind.
-              </p>
             </div>
-            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-200">
-              {progress.done} von {progress.total} erledigt
-            </div>
-          </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:grid-cols-6">
-            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400 md:col-span-2">
-              Slot Name
-              <input
-                className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
-                value={slotDraft.name}
-                onChange={(event) =>
-                  setSlotDraft((prev) => ({
-                    ...prev,
-                    name: event.target.value
-                  }))
-                }
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-              Anbieter
-              <input
-                className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
-                value={slotDraft.provider}
-                onChange={(event) =>
-                  setSlotDraft((prev) => ({
-                    ...prev,
-                    provider: event.target.value
-                  }))
-                }
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-              Einsatz
-              <input
-                className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
-                value={slotDraft.stake}
-                onChange={(event) =>
-                  setSlotDraft((prev) => ({
-                    ...prev,
-                    stake: event.target.value
-                  }))
-                }
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-              Ziel Spins
-              <input
-                className="rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white"
-                value={slotDraft.targetSpins}
-                onChange={(event) =>
-                  setSlotDraft((prev) => ({
-                    ...prev,
-                    targetSpins: event.target.value
-                  }))
-                }
-              />
-            </label>
-            <div className="flex items-end">
-              <button
-                className="w-full rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-white"
-                type="button"
-                onClick={handleAddSlot}
-              >
-                Slot hinzufügen
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4">
-            {slots.map((slot) => (
-              <div
-                key={slot.id}
-                className="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 md:grid-cols-[1.4fr_1.1fr_repeat(4,_minmax(0,1fr))_auto]"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-white">{slot.name}</p>
-                  <p className="text-xs text-slate-400">{slot.provider}</p>
-                </div>
-                <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Status
-                  <select
-                    className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
-                    value={slot.status}
-                    onChange={(event) =>
-                      handleSlotChange(
-                        slot.id,
-                        'status',
-                        event.target.value
-                      )
-                    }
-                  >
-                    {(Object.keys(statusLabels) as SlotStatus[]).map((key) => (
-                      <option key={key} value={key}>
-                        {statusLabels[key]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Einsatz
-                  <input
-                    className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
-                    value={slot.stake}
-                    onChange={(event) =>
-                      handleSlotChange(slot.id, 'stake', event.target.value)
-                    }
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Ziel Spins
-                  <input
-                    className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
-                    value={slot.targetSpins}
-                    onChange={(event) =>
-                      handleSlotChange(
-                        slot.id,
-                        'targetSpins',
-                        event.target.value
-                      )
-                    }
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Gesammelt
-                  <input
-                    className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
-                    value={slot.collectedSpins}
-                    onChange={(event) =>
-                      handleSlotChange(
-                        slot.id,
-                        'collectedSpins',
-                        event.target.value
-                      )
-                    }
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Auszahlung
-                  <input
-                    className="rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white"
-                    value={slot.payout}
-                    onChange={(event) =>
-                      handleSlotChange(slot.id, 'payout', event.target.value)
-                    }
-                  />
-                </label>
-                <div className="flex items-end">
-                  <button
-                    className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white"
-                    type="button"
-                    onClick={() => handleRemove(slot.id)}
-                  >
-                    Entfernen
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
-          <h2 className="text-lg font-semibold text-white">
-            Workflow für deine Hunts
-          </h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            {workflowStages.map((stage) => (
-              <div
-                key={stage.title}
-                className="rounded-xl border border-white/10 bg-slate-900/70 p-4"
-              >
-                <p className="text-sm font-semibold text-white">{stage.title}</p>
-                <p className="mt-2 text-xs text-slate-300">{stage.detail}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-indigo-400/30 bg-indigo-500/10 p-6">
-          <h3 className="text-base font-semibold text-white">
-            Hunt starten & teilen
-          </h3>
-          <p className="mt-2 text-sm text-slate-200">
-            Öffne das Overlay im Stream, teile den Tipp-Link im Chat und behalte
-            den Fortschritt live im Blick.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-white"
-              type="button"
+      <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+        <h2 className="text-lg font-semibold text-white">
+          Workflow für deine Hunts
+        </h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          {workflowStages.map((stage) => (
+            <div
+              key={stage.title}
+              className="rounded-xl border border-white/10 bg-slate-900/70 p-4"
             >
-              Hunt aktivieren
-            </button>
-            <Link
-              className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white"
-              href="/"
-            >
-              Zurück zum Dashboard
-            </Link>
-          </div>
-        </section>
-      </div>
-    </CreatorShell>
+              <p className="text-sm font-semibold text-white">{stage.title}</p>
+              <p className="mt-2 text-xs text-slate-300">{stage.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-indigo-400/30 bg-indigo-500/10 p-6">
+        <h3 className="text-base font-semibold text-white">
+          Hunt starten & teilen
+        </h3>
+        <p className="mt-2 text-sm text-slate-200">
+          Öffne das Overlay im Stream, teile den Tipp-Link im Chat und behalte
+          den Fortschritt live im Blick.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-white"
+            type="button"
+          >
+            Hunt aktivieren
+          </button>
+          <Link
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white"
+            href="/"
+          >
+            Zurück zum Dashboard
+          </Link>
+        </div>
+      </section>
+    </div>
   );
 }
