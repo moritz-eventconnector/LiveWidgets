@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import CreatorShell from '../../components/creator-shell';
 
@@ -81,6 +81,9 @@ const huntStatusLabels: Record<HuntStatus, string> = {
   active: 'Aktiv',
   done: 'Vergangen'
 };
+
+const storageKeyForHunt = (huntId: string) =>
+  `livewidgets:bonus-hunt:${huntId}`;
 
 const initialHunts: BonusHuntEntry[] = [
   {
@@ -179,6 +182,7 @@ export default function BonusHuntClient({
   const [slots, setSlots] = useState<BonusSlot[]>(
     initialHunts[0]?.slots ?? []
   );
+  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
 
   const progress = useMemo(() => {
     const total = slots.length;
@@ -211,9 +215,16 @@ export default function BonusHuntClient({
     return ((progress.payoutTotal - start) / start) * 100;
   }, [huntSettings.startBalance, progress.payoutTotal]);
 
-  const overlayUrl = overlayToken
-    ? `${baseUrl}/overlay/bonus-hunt?token=${overlayToken}`
-    : `${baseUrl}/overlay/bonus-hunt`;
+  const overlayUrl = useMemo(() => {
+    const url = new URL(`${baseUrl}/overlay/bonus-hunt`);
+    if (overlayToken) {
+      url.searchParams.set('token', overlayToken);
+    }
+    if (activeHuntId) {
+      url.searchParams.set('hunt', activeHuntId);
+    }
+    return url.toString();
+  }, [activeHuntId, baseUrl, overlayToken]);
   const tipsUrl = channelSlug
     ? `${baseUrl}/bonus-hunt/${channelSlug}/tipps`
     : `${baseUrl}/bonus-hunt/tipps`;
@@ -276,6 +287,23 @@ export default function BonusHuntClient({
   const handleSelectHunt = (id: string) => {
     const hunt = hunts.find((entry) => entry.id === id);
     if (!hunt) return;
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem(storageKeyForHunt(id));
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as {
+            settings?: HuntSettings;
+            slots?: BonusSlot[];
+          };
+          setActiveHuntId(id);
+          setHuntSettings(parsed.settings ?? hunt.settings);
+          setSlots(parsed.slots ?? hunt.slots);
+          return;
+        } catch {
+          // ignore parse errors and fall back to stored hunt
+        }
+      }
+    }
     setActiveHuntId(id);
     setHuntSettings(hunt.settings);
     setSlots(hunt.slots);
@@ -307,6 +335,59 @@ export default function BonusHuntClient({
     setHuntSettings(newHunt.settings);
     setSlots([]);
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!activeHuntId || hasLoadedFromStorage) return;
+    const stored = window.localStorage.getItem(storageKeyForHunt(activeHuntId));
+    if (!stored) {
+      setHasLoadedFromStorage(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as {
+        settings?: HuntSettings;
+        slots?: BonusSlot[];
+      };
+      if (parsed.settings) {
+        setHuntSettings(parsed.settings);
+      }
+      if (parsed.slots) {
+        setSlots(parsed.slots);
+      }
+    } catch {
+      // ignore parse errors
+    } finally {
+      setHasLoadedFromStorage(true);
+    }
+  }, [activeHuntId, hasLoadedFromStorage]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!activeHuntId) return;
+    const payload = JSON.stringify({
+      settings: huntSettings,
+      slots
+    });
+    window.localStorage.setItem(storageKeyForHunt(activeHuntId), payload);
+    setHunts((prev) =>
+      prev.map((hunt) =>
+        hunt.id === activeHuntId
+          ? {
+              ...hunt,
+              settings: huntSettings,
+              slots,
+              summary: slots.length
+                ? `${slots.length} Slots · ${huntSettings.startBalance || 0} ${
+                    huntSettings.currency
+                  } Startbalance`
+                : 'Noch keine Slots',
+              updatedAt: 'Gerade eben'
+            }
+          : hunt
+      )
+    );
+  }, [activeHuntId, huntSettings, slots]);
 
   return (
     <CreatorShell
