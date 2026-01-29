@@ -1,4 +1,8 @@
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+
 import WorkspaceSettingsForm from '@/components/WorkspaceSettingsForm';
+import { authOptions } from '@/lib/auth';
 
 const securityChecklist = [
   {
@@ -15,7 +19,12 @@ const securityChecklist = [
   }
 ];
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect('/login');
+  }
+
   return (
     <section className="flex flex-col gap-6">
       <header className="space-y-2">
@@ -26,8 +35,8 @@ export default function SettingsPage() {
           Workspace & Sicherheit
         </h2>
         <p className="text-sm text-slate-300">
-          Dieses Setup wird später durch Auth geschützt. Aktuell zeigt es die
-          geplante Struktur für Creator-Workspaces.
+          Pflege hier die Workspace-Details, die wir in deinen Modulen und
+          Overlays automatisch verwenden.
         </p>
       </header>
 

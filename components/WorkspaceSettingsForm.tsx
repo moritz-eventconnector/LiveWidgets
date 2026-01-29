@@ -1,6 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import {
+  defaultWorkspaceSettings,
+  type WorkspaceSettingsPayload
+} from '@/lib/workspace-settings';
 
 const timezones = [
   'Europe/Berlin',
@@ -12,34 +17,159 @@ const timezones = [
 
 const languages = ['Deutsch', 'English', 'Español', 'Français'];
 
-export default function WorkspaceSettingsForm() {
-  const [workspaceName, setWorkspaceName] = useState('LiveWidgets Studio');
-  const [tagline, setTagline] = useState(
-    'Overlays, Aktionen und Community-Tools an einem Ort.'
-  );
-  const [brandColor, setBrandColor] = useState('#6366f1');
-  const [timezone, setTimezone] = useState('Europe/Berlin');
-  const [language, setLanguage] = useState('Deutsch');
-  const [autoRecord, setAutoRecord] = useState(true);
-  const [alertPreview, setAlertPreview] = useState(true);
-  const [status, setStatus] = useState<'idle' | 'saved'>('idle');
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+type LoadStatus = 'loading' | 'ready' | 'error';
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+export default function WorkspaceSettingsForm() {
+  const [workspaceName, setWorkspaceName] = useState(
+    defaultWorkspaceSettings.workspaceName
+  );
+  const [tagline, setTagline] = useState(defaultWorkspaceSettings.tagline);
+  const [brandColor, setBrandColor] = useState(
+    defaultWorkspaceSettings.brandColor
+  );
+  const [timezone, setTimezone] = useState(
+    defaultWorkspaceSettings.timezone
+  );
+  const [language, setLanguage] = useState(
+    defaultWorkspaceSettings.language
+  );
+  const [autoRecord, setAutoRecord] = useState(
+    defaultWorkspaceSettings.autoRecord
+  );
+  const [alertPreview, setAlertPreview] = useState(
+    defaultWorkspaceSettings.alertPreview
+  );
+  const [initialSettings, setInitialSettings] = useState(
+    defaultWorkspaceSettings
+  );
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>('loading');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadSettings = async () => {
+      setLoadStatus('loading');
+      setErrorMessage(null);
+
+      try {
+        const response = await fetch('/api/workspace-settings', {
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          throw new Error('Laden fehlgeschlagen');
+        }
+
+        const data: { settings: WorkspaceSettingsPayload } =
+          await response.json();
+
+        if (!isActive) {
+          return;
+        }
+
+        setWorkspaceName(data.settings.workspaceName);
+        setTagline(data.settings.tagline);
+        setBrandColor(data.settings.brandColor);
+        setTimezone(data.settings.timezone);
+        setLanguage(data.settings.language);
+        setAutoRecord(data.settings.autoRecord);
+        setAlertPreview(data.settings.alertPreview);
+        setInitialSettings(data.settings);
+        setLoadStatus('ready');
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+        setLoadStatus('error');
+        setErrorMessage(
+          'Die Workspace-Daten konnten nicht geladen werden. Bitte versuche es erneut.'
+        );
+      }
+    };
+
+    void loadSettings();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setStatus('saved');
-    window.setTimeout(() => setStatus('idle'), 2400);
+    setSaveStatus('saving');
+    setErrorMessage(null);
+
+    const payload: WorkspaceSettingsPayload = {
+      workspaceName,
+      tagline,
+      brandColor,
+      timezone,
+      language,
+      autoRecord,
+      alertPreview
+    };
+
+    try {
+      const response = await fetch('/api/workspace-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Speichern fehlgeschlagen');
+      }
+
+      const data: { settings: WorkspaceSettingsPayload } =
+        await response.json();
+      setInitialSettings(data.settings);
+      setSaveStatus('saved');
+      window.setTimeout(() => setSaveStatus('idle'), 2400);
+    } catch (error) {
+      setSaveStatus('error');
+      setErrorMessage(
+        'Speichern fehlgeschlagen. Bitte prüfe deine Verbindung und versuche es erneut.'
+      );
+    }
   };
 
   const handleReset = () => {
-    setWorkspaceName('LiveWidgets Studio');
-    setTagline('Overlays, Aktionen und Community-Tools an einem Ort.');
-    setBrandColor('#6366f1');
-    setTimezone('Europe/Berlin');
-    setLanguage('Deutsch');
-    setAutoRecord(true);
-    setAlertPreview(true);
-    setStatus('idle');
+    setWorkspaceName(initialSettings.workspaceName);
+    setTagline(initialSettings.tagline);
+    setBrandColor(initialSettings.brandColor);
+    setTimezone(initialSettings.timezone);
+    setLanguage(initialSettings.language);
+    setAutoRecord(initialSettings.autoRecord);
+    setAlertPreview(initialSettings.alertPreview);
+    setSaveStatus('idle');
+    setErrorMessage(null);
   };
+
+  const isBusy = loadStatus === 'loading' || saveStatus === 'saving';
+
+  const statusMessage = (() => {
+    if (loadStatus === 'loading') {
+      return 'Einstellungen werden geladen…';
+    }
+    if (loadStatus === 'error') {
+      return 'Einstellungen konnten nicht geladen werden.';
+    }
+    if (saveStatus === 'saving') {
+      return 'Speichert Änderungen…';
+    }
+    if (saveStatus === 'saved') {
+      return 'Einstellungen gespeichert – nächster Sync in 5 Minuten.';
+    }
+    if (saveStatus === 'error') {
+      return 'Speichern fehlgeschlagen.';
+    }
+    return 'Letztes Update vor wenigen Sekunden.';
+  })();
 
   return (
     <form
@@ -140,24 +270,25 @@ export default function WorkspaceSettingsForm() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-slate-400">
-          {status === 'saved'
-            ? 'Einstellungen gespeichert – nächster Sync in 5 Minuten.'
-            : 'Letztes Update vor 12 Minuten.'}
-        </div>
+        <div className="text-xs text-slate-400">{statusMessage}</div>
+        {errorMessage ? (
+          <div className="w-full text-xs text-rose-200">{errorMessage}</div>
+        ) : null}
         <div className="flex gap-3">
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-200 transition hover:border-white/30"
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-200 transition hover:border-white/30 disabled:opacity-60"
+            disabled={isBusy}
           >
             Zurücksetzen
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
+            className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-60"
+            disabled={isBusy}
           >
-            Änderungen speichern
+            {saveStatus === 'saving' ? 'Speichern…' : 'Änderungen speichern'}
           </button>
         </div>
       </div>
