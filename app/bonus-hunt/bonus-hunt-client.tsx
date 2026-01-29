@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import CreatorShell from '../../components/creator-shell';
 
@@ -80,6 +80,22 @@ const huntStatusLabels: Record<HuntStatus, string> = {
   prepared: 'Vorbereitet',
   active: 'Aktiv',
   done: 'Vergangen'
+};
+
+const storageKey = 'livewidgets.bonus-hunts.v1';
+
+const emptyHuntSettings: HuntSettings = {
+  title: 'Bonus Hunt',
+  startBalance: '',
+  targetCashout: '',
+  currency: '€'
+};
+
+const buildSummary = (settings: HuntSettings, huntSlots: BonusSlot[]) => {
+  const balance = settings.startBalance
+    ? `${settings.startBalance} ${settings.currency}`
+    : '—';
+  return `${huntSlots.length} Slots · ${balance} Startbalance`;
 };
 
 const initialHunts: BonusHuntEntry[] = [
@@ -168,17 +184,44 @@ export default function BonusHuntClient({
   const [hunts, setHunts] = useState<BonusHuntEntry[]>(() => initialHunts);
   const [activeHuntId, setActiveHuntId] = useState(initialHunts[0]?.id ?? '');
   const [huntSettings, setHuntSettings] = useState<HuntSettings>(
-    initialHunts[0]?.settings ?? {
-      title: 'Bonus Hunt',
-      startBalance: '',
-      targetCashout: '',
-      currency: '€'
-    }
+    initialHunts[0]?.settings ?? emptyHuntSettings
   );
   const [slotDraft, setSlotDraft] = useState(emptySlot);
   const [slots, setSlots] = useState<BonusSlot[]>(
     initialHunts[0]?.slots ?? []
   );
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) {
+      setHasLoadedStorage(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as {
+        hunts?: BonusHuntEntry[];
+        activeHuntId?: string;
+      };
+      if (!parsed?.hunts || parsed.hunts.length === 0) {
+        setHasLoadedStorage(true);
+        return;
+      }
+      const fallbackHunt = parsed.hunts[0];
+      const selectedHunt =
+        parsed.hunts.find((hunt) => hunt.id === parsed.activeHuntId) ??
+        fallbackHunt;
+      setHunts(parsed.hunts);
+      setActiveHuntId(selectedHunt?.id ?? '');
+      setHuntSettings(selectedHunt?.settings ?? emptyHuntSettings);
+      setSlots(selectedHunt?.slots ?? []);
+    } catch (error) {
+      console.warn('Bonus Hunt Speicher konnte nicht geladen werden.', error);
+    } finally {
+      setHasLoadedStorage(true);
+    }
+  }, []);
 
   const progress = useMemo(() => {
     const total = slots.length;
@@ -308,6 +351,48 @@ export default function BonusHuntClient({
     setSlots([]);
   };
 
+  const handleDeleteHunt = (id: string) => {
+    setHunts((prev) => {
+      const nextHunts = prev.filter((hunt) => hunt.id !== id);
+      if (id === activeHuntId) {
+        const fallback = nextHunts[0];
+        setActiveHuntId(fallback?.id ?? '');
+        setHuntSettings(
+          fallback?.settings ?? emptyHuntSettings
+        );
+        setSlots(fallback?.slots ?? []);
+      }
+      return nextHunts;
+    });
+  };
+
+  useEffect(() => {
+    if (!hasLoadedStorage) return;
+    setHunts((prev) =>
+      prev.map((hunt) =>
+        hunt.id === activeHuntId
+          ? {
+              ...hunt,
+              title: huntSettings.title,
+              settings: huntSettings,
+              slots,
+              updatedAt: 'Gerade eben',
+              summary: buildSummary(huntSettings, slots)
+            }
+          : hunt
+      )
+    );
+  }, [activeHuntId, hasLoadedStorage, huntSettings, slots]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage || typeof window === 'undefined') return;
+    const payload = {
+      hunts,
+      activeHuntId
+    };
+    window.localStorage.setItem(storageKey, JSON.stringify(payload));
+  }, [activeHuntId, hasLoadedStorage, hunts]);
+
   return (
     <CreatorShell
       title="Bonus Hunt"
@@ -355,6 +440,26 @@ export default function BonusHuntClient({
                 </div>
                 <p className="text-xs text-slate-400">{hunt.summary}</p>
                 <p className="text-xs text-slate-500">{hunt.updatedAt}</p>
+                <span className="mt-2 flex justify-end">
+                  <span
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDeleteHunt(hunt.id);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleDeleteHunt(hunt.id);
+                      }
+                    }}
+                  >
+                    Löschen
+                  </span>
+                </span>
               </button>
             ))}
           </div>
