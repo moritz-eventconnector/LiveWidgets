@@ -1,5 +1,4 @@
 'use client';
-
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
@@ -11,7 +10,7 @@ export default function LoginButton() {
 
   const handleClick = () => {
     startTransition(() => {
-      void signIn('authentik', { callbackUrl });
+      void signIn('authentik', { callbackUrl, redirect: true });
     });
   };
 

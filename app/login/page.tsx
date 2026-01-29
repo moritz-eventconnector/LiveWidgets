@@ -17,7 +17,35 @@ const highlights = [
   }
 ];
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams?: {
+    callbackUrl?: string;
+    error?: string;
+  };
+};
+
+const errorMessages: Record<string, string> = {
+  OAuthSignin:
+    'Der Authentik-Login konnte nicht gestartet werden. Prüfe die OIDC-Client-Daten.',
+  OAuthCallback:
+    'Authentik hat die Anmeldung abgebrochen oder die Callback-URL ist falsch.',
+  OAuthAccountNotLinked:
+    'Dieser Account ist bereits mit einem anderen Login verknüpft.',
+  OAuthCreateAccount: 'Der Account konnte nicht erstellt werden.',
+  EmailCreateAccount: 'Der Account konnte nicht erstellt werden.',
+  EmailSignin: 'Die E-Mail-Anmeldung ist derzeit nicht verfügbar.',
+  CredentialsSignin: 'E-Mail oder Passwort sind falsch.',
+  SessionRequired: 'Bitte melde dich an, um fortzufahren.',
+  Default: 'Beim Login ist ein unerwarteter Fehler aufgetreten.',
+  authentik:
+    'Authentik konnte nicht erreicht werden. Prüfe die Issuer-URL und Netzwerkfreigaben.'
+};
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  const errorKey = searchParams?.error;
+  const errorMessage =
+    (errorKey && errorMessages[errorKey]) || (errorKey && errorMessages.Default);
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-16">
@@ -33,6 +61,18 @@ export default function LoginPage() {
             für Creator, die direkt in ihr Dashboard springen.
           </p>
         </header>
+
+        {errorMessage ? (
+          <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-5 py-4 text-sm text-rose-100">
+            <p className="text-xs uppercase tracking-[0.3em] text-rose-200">
+              Login fehlgeschlagen
+            </p>
+            <p className="mt-2">{errorMessage}</p>
+            <p className="mt-2 text-xs text-rose-200">
+              Fehlercode: <span className="font-semibold">{errorKey}</span>
+            </p>
+          </div>
+        ) : null}
 
         <section className="grid gap-6 rounded-3xl border border-white/10 bg-slate-900/40 p-8 md:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-5">
