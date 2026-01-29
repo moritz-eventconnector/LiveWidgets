@@ -1,6 +1,4 @@
 'use client';
-
-import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 
@@ -9,9 +7,13 @@ export default function LoginButton() {
   const [isPending, startTransition] = useTransition();
   const callbackUrl = searchParams?.get('callbackUrl') ?? '/';
 
+  const signInUrl = `/api/auth/signin/authentik?callbackUrl=${encodeURIComponent(
+    callbackUrl
+  )}`;
+
   const handleClick = () => {
     startTransition(() => {
-      void signIn('authentik', { callbackUrl });
+      window.location.assign(signInUrl);
     });
   };
 
