@@ -171,12 +171,7 @@ export default function BonusHuntClient({
   const [hunts, setHunts] = useState<BonusHuntEntry[]>(() => initialHunts);
   const [activeHuntId, setActiveHuntId] = useState(initialHunts[0]?.id ?? '');
   const [huntSettings, setHuntSettings] = useState<HuntSettings>(
-    initialHunts[0]?.settings ?? {
-      title: 'Bonus Hunt',
-      startBalance: '',
-      targetCashout: '',
-      currency: '€'
-    }
+    initialHunts[0]?.settings ?? emptyHuntSettings
   );
   const [slotDraft, setSlotDraft] = useState(emptySlot);
   const [slots, setSlots] = useState<BonusSlot[]>(
@@ -436,6 +431,26 @@ export default function BonusHuntClient({
                 </div>
                 <p className="text-xs text-slate-400">{hunt.summary}</p>
                 <p className="text-xs text-slate-500">{hunt.updatedAt}</p>
+                <span className="mt-2 flex justify-end">
+                  <span
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDeleteHunt(hunt.id);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleDeleteHunt(hunt.id);
+                      }
+                    }}
+                  >
+                    Löschen
+                  </span>
+                </span>
               </button>
             ))}
           </div>
