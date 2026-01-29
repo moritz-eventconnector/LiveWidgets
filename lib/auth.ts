@@ -1,6 +1,6 @@
 import NextAuth, { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import OAuthProvider from 'next-auth/providers/oauth';
+import { OAuthProvider } from 'next-auth/providers/oauth';
 import TwitchProvider from 'next-auth/providers/twitch';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { compare } from 'bcryptjs';
