@@ -338,6 +338,30 @@ export default function BonusHuntClient({
     setSlots([]);
   };
 
+  const handleDeleteHunt = (id: string) => {
+    let remainingHunts: BonusHuntEntry[] = [];
+    setHunts((prev) => {
+      remainingHunts = prev.filter((hunt) => hunt.id !== id);
+      return remainingHunts;
+    });
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(storageKeyForHunt(id));
+    }
+    if (id !== activeHuntId) {
+      return;
+    }
+    const nextHunt = remainingHunts[0];
+    if (nextHunt) {
+      setActiveHuntId(nextHunt.id);
+      setHuntSettings(nextHunt.settings);
+      setSlots(nextHunt.slots);
+    } else {
+      setActiveHuntId('');
+      setHuntSettings(emptyHuntSettings);
+      setSlots([]);
+    }
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!activeHuntId || hasLoadedFromStorage) return;
