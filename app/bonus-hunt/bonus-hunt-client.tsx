@@ -76,6 +76,13 @@ const emptySlot: Omit<BonusSlot, 'id'> = {
   status: 'open'
 };
 
+const emptyHuntSettings: HuntSettings = {
+  title: '',
+  startBalance: '',
+  targetCashout: '',
+  currency: '€'
+};
+
 const huntStatusLabels: Record<HuntStatus, string> = {
   prepared: 'Vorbereitet',
   active: 'Aktiv',
