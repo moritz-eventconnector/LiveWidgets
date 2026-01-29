@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import LoginButton from './login-button';
 
 const highlights = [
@@ -55,7 +57,19 @@ export default function LoginPage() {
                 </p>
               </div>
             </div>
-            <LoginButton />
+            <Suspense
+              fallback={
+                <button
+                  className="block w-full rounded-full border border-indigo-400/60 bg-indigo-500/20 px-6 py-3 text-center text-sm font-semibold text-white opacity-70"
+                  type="button"
+                  disabled
+                >
+                  Anmeldung wird geladen…
+                </button>
+              }
+            >
+              <LoginButton />
+            </Suspense>
           </div>
 
           <div className="space-y-4">
