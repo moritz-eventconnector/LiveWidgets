@@ -41,6 +41,25 @@ type BonusSlot = {
   status: SlotStatus;
 };
 
+type HuntSettings = {
+  title: string;
+  startBalance: string;
+  targetCashout: string;
+  currency: string;
+};
+
+type HuntStatus = 'prepared' | 'active' | 'done';
+
+type BonusHuntEntry = {
+  id: string;
+  title: string;
+  status: HuntStatus;
+  updatedAt: string;
+  summary: string;
+  settings: HuntSettings;
+  slots: BonusSlot[];
+};
+
 type BonusHuntClientProps = {
   baseUrl: string;
   overlayToken: string | null;
@@ -57,41 +76,109 @@ const emptySlot: Omit<BonusSlot, 'id'> = {
   status: 'open'
 };
 
+const huntStatusLabels: Record<HuntStatus, string> = {
+  prepared: 'Vorbereitet',
+  active: 'Aktiv',
+  done: 'Vergangen'
+};
+
+const initialHunts: BonusHuntEntry[] = [
+  {
+    id: 'hunt-24',
+    title: 'Bonus Hunt #24',
+    status: 'active',
+    updatedAt: 'Heute, 18:30',
+    summary: '10 Slots · 500 € Startbalance',
+    settings: {
+      title: 'Bonus Hunt #24',
+      startBalance: '500',
+      targetCashout: '1500',
+      currency: '€'
+    },
+    slots: [
+      {
+        id: 'slot-1',
+        name: 'Gates of Olympus',
+        provider: 'Pragmatic Play',
+        stake: '1.00',
+        targetSpins: '100',
+        collectedSpins: '60',
+        payout: '0',
+        status: 'spinning'
+      },
+      {
+        id: 'slot-2',
+        name: 'Book of Dead',
+        provider: 'Play’n GO',
+        stake: '0.80',
+        targetSpins: '80',
+        collectedSpins: '80',
+        payout: '320',
+        status: 'done'
+      }
+    ]
+  },
+  {
+    id: 'hunt-23',
+    title: 'Bonus Hunt #23',
+    status: 'done',
+    updatedAt: '02.03.2024',
+    summary: '12 Slots · 400 € Startbalance',
+    settings: {
+      title: 'Bonus Hunt #23',
+      startBalance: '400',
+      targetCashout: '1200',
+      currency: '€'
+    },
+    slots: [
+      {
+        id: 'slot-3',
+        name: 'Sweet Bonanza',
+        provider: 'Pragmatic Play',
+        stake: '0.60',
+        targetSpins: '80',
+        collectedSpins: '80',
+        payout: '540',
+        status: 'done'
+      }
+    ]
+  },
+  {
+    id: 'hunt-25',
+    title: 'Bonus Hunt #25 (Draft)',
+    status: 'prepared',
+    updatedAt: 'Gestern, 21:10',
+    summary: '5 Slots · 300 € Startbalance',
+    settings: {
+      title: 'Bonus Hunt #25',
+      startBalance: '300',
+      targetCashout: '900',
+      currency: '€'
+    },
+    slots: []
+  }
+];
+
 export default function BonusHuntClient({
   baseUrl,
   overlayToken,
   channelSlug
 }: BonusHuntClientProps) {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
-  const [huntSettings, setHuntSettings] = useState({
-    title: 'Bonus Hunt #24',
-    startBalance: '500',
-    targetCashout: '1500',
-    currency: '€'
-  });
-  const [slotDraft, setSlotDraft] = useState(emptySlot);
-  const [slots, setSlots] = useState<BonusSlot[]>([
-    {
-      id: 'slot-1',
-      name: 'Gates of Olympus',
-      provider: 'Pragmatic Play',
-      stake: '1.00',
-      targetSpins: '100',
-      collectedSpins: '60',
-      payout: '0',
-      status: 'spinning'
-    },
-    {
-      id: 'slot-2',
-      name: 'Book of Dead',
-      provider: 'Play’n GO',
-      stake: '0.80',
-      targetSpins: '80',
-      collectedSpins: '80',
-      payout: '320',
-      status: 'done'
+  const [hunts, setHunts] = useState<BonusHuntEntry[]>(() => initialHunts);
+  const [activeHuntId, setActiveHuntId] = useState(initialHunts[0]?.id ?? '');
+  const [huntSettings, setHuntSettings] = useState<HuntSettings>(
+    initialHunts[0]?.settings ?? {
+      title: 'Bonus Hunt',
+      startBalance: '',
+      targetCashout: '',
+      currency: '€'
     }
-  ]);
+  );
+  const [slotDraft, setSlotDraft] = useState(emptySlot);
+  const [slots, setSlots] = useState<BonusSlot[]>(
+    initialHunts[0]?.slots ?? []
+  );
 
   const progress = useMemo(() => {
     const total = slots.length;
@@ -186,12 +273,93 @@ export default function BonusHuntClient({
     setSlots((prev) => prev.filter((slot) => slot.id !== id));
   };
 
+  const handleSelectHunt = (id: string) => {
+    const hunt = hunts.find((entry) => entry.id === id);
+    if (!hunt) return;
+    setActiveHuntId(id);
+    setHuntSettings(hunt.settings);
+    setSlots(hunt.slots);
+  };
+
+  const handleCreateHunt = () => {
+    const existingNumbers = hunts
+      .map((hunt) => Number(hunt.title.match(/#(\d+)/)?.[1]))
+      .filter((value) => !Number.isNaN(value));
+    const nextNumber =
+      existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const title = `Bonus Hunt #${nextNumber}`;
+    const newHunt: BonusHuntEntry = {
+      id: `hunt-${Date.now()}`,
+      title,
+      status: 'prepared',
+      updatedAt: 'Gerade eben',
+      summary: 'Noch keine Slots',
+      settings: {
+        title,
+        startBalance: '',
+        targetCashout: '',
+        currency: '€'
+      },
+      slots: []
+    };
+    setHunts((prev) => [newHunt, ...prev]);
+    setActiveHuntId(newHunt.id);
+    setHuntSettings(newHunt.settings);
+    setSlots([]);
+  };
+
   return (
     <CreatorShell
       title="Bonus Hunt"
       subtitle="Freispiele sauber tracken, Ergebnisse teilen und deinen Chat aktiv einbinden."
     >
       <div className="flex flex-col gap-8">
+        <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                Deine Bonus Hunts
+              </h2>
+              <p className="text-sm text-slate-300">
+                Sieh vergangene, vorbereitete und aktive Hunts auf einen Blick.
+              </p>
+            </div>
+            <button
+              className="rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-white"
+              type="button"
+              onClick={handleCreateHunt}
+            >
+              Neuen Hunt erstellen
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {hunts.map((hunt) => (
+              <button
+                key={hunt.id}
+                className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
+                  hunt.id === activeHuntId
+                    ? 'border-indigo-400/60 bg-indigo-500/10'
+                    : 'border-white/10 bg-slate-900/70 hover:border-indigo-400/40 hover:bg-slate-900/90'
+                }`}
+                type="button"
+                onClick={() => handleSelectHunt(hunt.id)}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-white">
+                    {hunt.title}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200">
+                    {huntStatusLabels[hunt.status]}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">{hunt.summary}</p>
+                <p className="text-xs text-slate-500">{hunt.updatedAt}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
             <p className="text-xs uppercase tracking-[0.3em] text-indigo-300">
