@@ -1,6 +1,6 @@
 import NextAuth, { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { OAuthProvider } from 'next-auth/providers/oauth';
+import AuthentikProvider from 'next-auth/providers/authentik';
 import TwitchProvider from 'next-auth/providers/twitch';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { compare } from 'bcryptjs';
@@ -12,26 +12,10 @@ import { fetchTwitchProfile } from '@/lib/twitch';
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    OAuthProvider({
-      id: 'authentik',
-      name: 'Authentik',
-      type: 'oauth',
-      wellKnown: `${env.AUTHENTIK_ISSUER}/.well-known/openid-configuration`,
+    AuthentikProvider({
       issuer: env.AUTHENTIK_ISSUER,
       clientId: env.AUTHENTIK_CLIENT_ID,
-      clientSecret: env.AUTHENTIK_CLIENT_SECRET,
-      authorization: { params: { scope: 'openid email profile' } },
-      profile(profile) {
-        return {
-          id: profile.sub ?? profile.id,
-          name:
-            profile.name ??
-            profile.preferred_username ??
-            profile.nickname ??
-            profile.email,
-          email: profile.email
-        };
-      }
+      clientSecret: env.AUTHENTIK_CLIENT_SECRET
     }),
     TwitchProvider({
       clientId: env.TWITCH_CLIENT_ID,
