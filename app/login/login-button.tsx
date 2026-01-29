@@ -8,6 +8,10 @@ export default function LoginButton() {
   const [isPending, startTransition] = useTransition();
   const callbackUrl = searchParams?.get('callbackUrl') ?? '/';
 
+  const signInUrl = `/api/auth/signin/authentik?callbackUrl=${encodeURIComponent(
+    callbackUrl
+  )}`;
+
   const handleClick = () => {
     startTransition(() => {
       void signIn('authentik', { callbackUrl, redirect: true });
