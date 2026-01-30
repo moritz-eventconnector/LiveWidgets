@@ -390,10 +390,20 @@ export default function BonusHuntClient({
           }
         }
         
-        if (loadedHunts.length > 0 && !activeHuntId) {
-          setActiveHuntId(loadedHunts[0].id);
-          setHuntSettings(loadedHunts[0].settings);
-          setSlots(loadedHunts[0].slots);
+        // Only set active hunt if none is currently selected
+        if (loadedHunts.length > 0) {
+          setActiveHuntId((currentId) => {
+            if (!currentId) {
+              return loadedHunts[0].id;
+            }
+            return currentId;
+          });
+          // Set initial hunt data if no active hunt is set
+          const currentActiveHunt = loadedHunts.find((h: BonusHuntEntry) => h.id === activeHuntId);
+          if (!currentActiveHunt && loadedHunts.length > 0) {
+            setHuntSettings(loadedHunts[0].settings);
+            setSlots(loadedHunts[0].slots);
+          }
         }
       } catch (error) {
         console.error('Failed to load hunts:', error);
@@ -412,6 +422,7 @@ export default function BonusHuntClient({
     return () => {
       isActive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Debounced save to API

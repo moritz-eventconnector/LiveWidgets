@@ -16,7 +16,7 @@ export async function GET(
     const { huntId } = await params;
 
     // Find channel by overlay token
-    const channel = await prisma.channel.findUnique({
+    const channel = await prisma.channel.findFirst({
       where: { overlayToken: token }
     });
 
