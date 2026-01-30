@@ -5,6 +5,9 @@ import { getAuthOptions } from '@/lib/auth';
 import { getChannelForUser } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering to ensure route is registered
+export const dynamic = 'force-dynamic';
+
 async function getUserId() {
   const session = await getServerSession(getAuthOptions());
   return session?.user?.id ?? null;
