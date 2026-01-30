@@ -250,7 +250,7 @@ export default function BonusHuntClient({
     const title = `Bonus Hunt #${nextNumber}`;
     
     try {
-      const response = await fetch('/api/bonus-hunt', {
+      const response = await fetch('/api/bonus-hunts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -338,7 +338,7 @@ export default function BonusHuntClient({
       setIsLoading(true);
       
       try {
-        const response = await fetch('/api/bonus-hunt', {
+        const response = await fetch('/api/bonus-hunts', {
           cache: 'no-store'
         });
         
