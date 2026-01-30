@@ -137,7 +137,33 @@ if [[ ! -d prisma/migrations || -z "$(find prisma/migrations -maxdepth 1 -type d
   echo "No prisma migrations found. Running prisma db push..."
   sudo docker compose exec -T app npm run prisma:push
 else
-  sudo docker compose exec -T app npm run prisma:migrate
+  # Check if _prisma_migrations table exists (database has been baselined)
+  has_migration_table=$(sudo docker compose exec -T postgres env PGPASSWORD="${POSTGRES_PASSWORD}" \
+    psql -U livewidgets -d livewidgets -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_prisma_migrations');" 2>/dev/null | tr -d '[:space:]' || echo "f")
+  
+  if [[ "$has_migration_table" == "t" ]]; then
+    echo "Database has migration history. Running prisma migrate deploy..."
+    if sudo docker compose exec -T app npm run prisma:migrate; then
+      echo "Migrations applied successfully."
+    else
+      echo "Migration failed. If this is the first time using migrations on an existing database,"
+      echo "you may need to baseline it first. Run: ./scripts/baseline-migration.sh"
+      exit 1
+    fi
+  else
+    echo "Database exists but has no migration history. Attempting to baseline..."
+    # Try to baseline the migration
+    if sudo docker compose exec -T app npx prisma migrate resolve --applied 20250101000000_add_bonus_hunt_fields 2>/dev/null; then
+      echo "Database baselined successfully. Running migrate deploy..."
+      sudo docker compose exec -T app npm run prisma:migrate
+    else
+      echo "Failed to baseline. The database schema may not match the migration."
+      echo "You can either:"
+      echo "  1. Run: ./scripts/baseline-migration.sh (if schema already matches)"
+      echo "  2. Or run: sudo docker compose exec app npm run prisma:push (to sync schema)"
+      exit 1
+    fi
+  fi
 fi
 
 echo "Update complete."
