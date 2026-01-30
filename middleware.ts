@@ -8,10 +8,16 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/bonus-hunt/overlay') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico' ||
     publicPaths.some((path) => pathname.startsWith(path))
   ) {
+    return NextResponse.next();
+  }
+  
+  // Allow all API routes - they handle their own authentication
+  if (pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
