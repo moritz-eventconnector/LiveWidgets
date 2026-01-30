@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import crypto from 'crypto';
 
 import { getAuthOptions } from '@/lib/auth';
 import { getChannelForUser } from '@/lib/access';
@@ -13,6 +14,48 @@ async function getUserId() {
   return session?.user?.id ?? null;
 }
 
+async function getOrCreateChannel(userId: string) {
+  let channel = await getChannelForUser(userId);
+  
+  if (!channel) {
+    // Create a default channel if none exists (for Bonus-Hunt to work without Twitch)
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return null;
+    }
+    
+    // Generate a default slug from email or userId
+    const defaultSlug = user.email?.split('@')[0] ?? `user-${userId.substring(0, 8)}`;
+    const twitchBroadcasterId = `default-${userId}`;
+    
+    try {
+      channel = await prisma.channel.create({
+        data: {
+          slug: defaultSlug,
+          ownerUserId: userId,
+          twitchBroadcasterId: twitchBroadcasterId,
+          twitchBroadcasterLogin: defaultSlug,
+          overlayToken: crypto.randomBytes(16).toString('hex'),
+          subscriptionStatus: 'INACTIVE'
+        }
+      });
+    } catch (error: any) {
+      // If channel creation fails (e.g., unique constraint), try to find it
+      if (error?.code === 'P2002') {
+        channel = await prisma.channel.findUnique({
+          where: { twitchBroadcasterId: twitchBroadcasterId }
+        });
+      }
+      if (!channel) {
+        console.error('Failed to create or find channel:', error);
+        throw error;
+      }
+    }
+  }
+  
+  return channel;
+}
+
 export async function GET() {
   try {
     const userId = await getUserId();
@@ -20,9 +63,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const channel = await getChannelForUser(userId);
+    const channel = await getOrCreateChannel(userId);
     if (!channel) {
-      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const hunts = await prisma.bonusHunt.findMany({
@@ -100,9 +143,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const channel = await getChannelForUser(userId);
+    const channel = await getOrCreateChannel(userId);
     if (!channel) {
-      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const body = await request.json().catch(() => ({}));

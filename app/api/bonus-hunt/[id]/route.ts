@@ -107,23 +107,23 @@ export async function PUT(
 ) {
   try {
     const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const channel = await getChannelForUser(userId);
-  if (!channel) {
-    return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
-  }
-
-  const { id } = await params;
-
-  const existingHunt = await prisma.bonusHunt.findFirst({
-    where: {
-      id,
-      channelId: channel.id
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-  });
+
+    const channel = await getChannelForUser(userId);
+    if (!channel) {
+      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+    }
+
+    const { id } = await params;
+
+    const existingHunt = await prisma.bonusHunt.findFirst({
+      where: {
+        id,
+        channelId: channel.id
+      }
+    });
 
   if (!existingHunt) {
     return NextResponse.json({ error: 'Hunt not found' }, { status: 404 });
@@ -216,23 +216,23 @@ export async function DELETE(
 ) {
   try {
     const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const channel = await getChannelForUser(userId);
-  if (!channel) {
-    return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
-  }
-
-  const { id } = await params;
-
-  const hunt = await prisma.bonusHunt.findFirst({
-    where: {
-      id,
-      channelId: channel.id
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-  });
+
+    const channel = await getChannelForUser(userId);
+    if (!channel) {
+      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+    }
+
+    const { id } = await params;
+
+    const hunt = await prisma.bonusHunt.findFirst({
+      where: {
+        id,
+        channelId: channel.id
+      }
+    });
 
   if (!hunt) {
     return NextResponse.json({ error: 'Hunt not found' }, { status: 404 });

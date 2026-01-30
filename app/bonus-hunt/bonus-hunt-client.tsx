@@ -62,6 +62,7 @@ type BonusHuntClientProps = {
   baseUrl: string;
   overlayToken: string | null;
   channelSlug: string | null;
+  isDefaultChannel?: boolean;
 };
 
 const emptySlot: Omit<BonusSlot, 'id'> = {
@@ -93,7 +94,8 @@ const storageKeyForHunt = (huntId: string) =>
 export default function BonusHuntClient({
   baseUrl,
   overlayToken,
-  channelSlug
+  channelSlug,
+  isDefaultChannel = false
 }: BonusHuntClientProps) {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [hunts, setHunts] = useState<BonusHuntEntry[]>([]);
@@ -510,6 +512,35 @@ export default function BonusHuntClient({
 
   return (
     <div className="flex flex-col gap-8">
+      {isDefaultChannel && (
+        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <svg
+              className="h-5 w-5 flex-shrink-0 text-yellow-400 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-yellow-400 mb-1">
+                Twitch-Integration nicht aktiv
+              </h3>
+              <p className="text-sm text-yellow-300/90">
+                Bonus-Hunt funktioniert vollständig (Eintragen, Overlay, etc.), aber Twitch-Funktionen wie Chat-Integration sind aktuell nicht verfügbar. 
+                Sobald die Twitch-Anbindung implementiert ist, werden diese Funktionen automatisch aktiviert.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {error && (
         <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
           <p className="text-xs uppercase tracking-[0.3em] text-amber-200">
