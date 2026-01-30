@@ -371,7 +371,7 @@ export default function BonusHuntClient({
                     slots?: BonusSlot[];
                   };
                   // Try to create in DB (will fail if not authenticated, which is fine)
-                  await fetch('/api/bonus-hunt', {
+                  await fetch('/api/bonus-hunts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
