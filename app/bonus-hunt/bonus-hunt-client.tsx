@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 const workflowStages = [
   {
@@ -90,99 +90,23 @@ const huntStatusLabels: Record<HuntStatus, string> = {
 const storageKeyForHunt = (huntId: string) =>
   `livewidgets:bonus-hunt:${huntId}`;
 
-const initialHunts: BonusHuntEntry[] = [
-  {
-    id: 'hunt-24',
-    title: 'Bonus Hunt #24',
-    status: 'active',
-    updatedAt: 'Heute, 18:30',
-    summary: '10 Slots · 500 € Startbalance',
-    settings: {
-      title: 'Bonus Hunt #24',
-      startBalance: '500',
-      targetCashout: '1500',
-      currency: '€'
-    },
-    slots: [
-      {
-        id: 'slot-1',
-        name: 'Gates of Olympus',
-        provider: 'Pragmatic Play',
-        stake: '1.00',
-        targetSpins: '100',
-        collectedSpins: '60',
-        payout: '0',
-        status: 'spinning'
-      },
-      {
-        id: 'slot-2',
-        name: 'Book of Dead',
-        provider: 'Play’n GO',
-        stake: '0.80',
-        targetSpins: '80',
-        collectedSpins: '80',
-        payout: '320',
-        status: 'done'
-      }
-    ]
-  },
-  {
-    id: 'hunt-23',
-    title: 'Bonus Hunt #23',
-    status: 'done',
-    updatedAt: '02.03.2024',
-    summary: '12 Slots · 400 € Startbalance',
-    settings: {
-      title: 'Bonus Hunt #23',
-      startBalance: '400',
-      targetCashout: '1200',
-      currency: '€'
-    },
-    slots: [
-      {
-        id: 'slot-3',
-        name: 'Sweet Bonanza',
-        provider: 'Pragmatic Play',
-        stake: '0.60',
-        targetSpins: '80',
-        collectedSpins: '80',
-        payout: '540',
-        status: 'done'
-      }
-    ]
-  },
-  {
-    id: 'hunt-25',
-    title: 'Bonus Hunt #25 (Draft)',
-    status: 'prepared',
-    updatedAt: 'Gestern, 21:10',
-    summary: '5 Slots · 300 € Startbalance',
-    settings: {
-      title: 'Bonus Hunt #25',
-      startBalance: '300',
-      targetCashout: '900',
-      currency: '€'
-    },
-    slots: []
-  }
-];
-
 export default function BonusHuntClient({
   baseUrl,
   overlayToken,
   channelSlug
 }: BonusHuntClientProps) {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
-  const [hunts, setHunts] = useState<BonusHuntEntry[]>(() => initialHunts);
-  const [activeHuntId, setActiveHuntId] = useState(initialHunts[0]?.id ?? '');
-  const [huntSettings, setHuntSettings] = useState<HuntSettings>(
-    initialHunts[0]?.settings ?? emptyHuntSettings
-  );
+  const [hunts, setHunts] = useState<BonusHuntEntry[]>([]);
+  const [activeHuntId, setActiveHuntId] = useState('');
+  const [huntSettings, setHuntSettings] = useState<HuntSettings>(emptyHuntSettings);
   const [slotDraft, setSlotDraft] = useState(emptySlot);
-  const [slots, setSlots] = useState<BonusSlot[]>(
-    initialHunts[0]?.slots ?? []
-  );
-  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
+  const [slots, setSlots] = useState<BonusSlot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasMigratedRef = useRef(false);
 
   const progress = useMemo(() => {
     const total = slots.length;
@@ -252,15 +176,18 @@ export default function BonusHuntClient({
   };
 
   const handleAddSlot = () => {
-    if (!slotDraft.name.trim()) return;
-    setSlots((prev) => [
-      ...prev,
-      {
-        id: `slot-${Date.now()}`,
-        ...slotDraft
-      }
-    ]);
+    if (!slotDraft.name.trim()) {
+      setError('Bitte gib einen Slot-Namen ein.');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    const newSlot: BonusSlot = {
+      id: `slot-${Date.now()}`,
+      ...slotDraft
+    };
+    setSlots((prev) => [...prev, newSlot]);
     setSlotDraft(emptySlot);
+    setError(null);
   };
 
   const handleSlotChange = (
@@ -284,137 +211,312 @@ export default function BonusHuntClient({
     setSlots((prev) => prev.filter((slot) => slot.id !== id));
   };
 
-  const handleSelectHunt = (id: string) => {
+  const handleSelectHunt = async (id: string) => {
     const hunt = hunts.find((entry) => entry.id === id);
     if (!hunt) return;
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem(storageKeyForHunt(id));
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as {
-            settings?: HuntSettings;
-            slots?: BonusSlot[];
-          };
-          setActiveHuntId(id);
-          setHuntSettings(parsed.settings ?? hunt.settings);
-          setSlots(parsed.slots ?? hunt.slots);
-          return;
-        } catch {
-          // ignore parse errors and fall back to stored hunt
-        }
-      }
-    }
+    
     setActiveHuntId(id);
     setHuntSettings(hunt.settings);
     setSlots(hunt.slots);
+    setError(null);
+    
+    // Load full hunt data from API
+    try {
+      const response = await fetch(`/api/bonus-hunt/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.hunt) {
+          setHuntSettings(data.hunt.settings);
+          setSlots(data.hunt.slots);
+        }
+      } else {
+        setError('Hunt konnte nicht geladen werden.');
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to load hunt:', error);
+      setError('Fehler beim Laden des Hunts.');
+      setTimeout(() => setError(null), 3000);
+    }
   };
 
-  const handleCreateHunt = () => {
+  const handleCreateHunt = async () => {
+    setError(null);
     const existingNumbers = hunts
       .map((hunt) => Number(hunt.title.match(/#(\d+)/)?.[1]))
       .filter((value) => !Number.isNaN(value));
     const nextNumber =
       existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
     const title = `Bonus Hunt #${nextNumber}`;
-    const newHunt: BonusHuntEntry = {
-      id: `hunt-${Date.now()}`,
-      title,
-      status: 'prepared',
-      updatedAt: 'Gerade eben',
-      summary: 'Noch keine Slots',
-      settings: {
-        title,
-        startBalance: '',
-        targetCashout: '',
-        currency: '€'
-      },
-      slots: []
-    };
-    setHunts((prev) => [newHunt, ...prev]);
-    setActiveHuntId(newHunt.id);
-    setHuntSettings(newHunt.settings);
-    setSlots([]);
-  };
-
-  const handleDeleteHunt = (id: string) => {
-    let remainingHunts: BonusHuntEntry[] = [];
-    setHunts((prev) => {
-      remainingHunts = prev.filter((hunt) => hunt.id !== id);
-      return remainingHunts;
-    });
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(storageKeyForHunt(id));
-    }
-    if (id !== activeHuntId) {
-      return;
-    }
-    const nextHunt = remainingHunts[0];
-    if (nextHunt) {
-      setActiveHuntId(nextHunt.id);
-      setHuntSettings(nextHunt.settings);
-      setSlots(nextHunt.slots);
-    } else {
-      setActiveHuntId('');
-      setHuntSettings(emptyHuntSettings);
-      setSlots([]);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!activeHuntId || hasLoadedFromStorage) return;
-    const stored = window.localStorage.getItem(storageKeyForHunt(activeHuntId));
-    if (!stored) {
-      setHasLoadedFromStorage(true);
-      return;
-    }
+    
     try {
-      const parsed = JSON.parse(stored) as {
-        settings?: HuntSettings;
-        slots?: BonusSlot[];
-      };
-      if (parsed.settings) {
-        setHuntSettings(parsed.settings);
+      const response = await fetch('/api/bonus-hunt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          settings: {
+            title,
+            startBalance: '',
+            targetCashout: '',
+            currency: '€'
+          },
+          slots: []
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const newHunt = data.hunt;
+        setHunts((prev) => [newHunt, ...prev]);
+        setActiveHuntId(newHunt.id);
+        setHuntSettings(newHunt.settings);
+        setSlots([]);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Hunt konnte nicht erstellt werden.');
+        setTimeout(() => setError(null), 5000);
       }
-      if (parsed.slots) {
-        setSlots(parsed.slots);
-      }
-    } catch {
-      // ignore parse errors
-    } finally {
-      setHasLoadedFromStorage(true);
+    } catch (error) {
+      console.error('Failed to create hunt:', error);
+      setError('Fehler beim Erstellen des Hunts. Bitte versuche es erneut.');
+      setTimeout(() => setError(null), 5000);
     }
-  }, [activeHuntId, hasLoadedFromStorage]);
+  };
 
+  const handleDeleteHunt = async (id: string) => {
+    if (!confirm('Möchtest du diesen Hunt wirklich löschen?')) {
+      return;
+    }
+    
+    setError(null);
+    try {
+      const response = await fetch(`/api/bonus-hunt/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        let remainingHunts: BonusHuntEntry[] = [];
+        setHunts((prev) => {
+          remainingHunts = prev.filter((hunt) => hunt.id !== id);
+          return remainingHunts;
+        });
+        
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(storageKeyForHunt(id));
+        }
+        
+        if (id === activeHuntId) {
+          const nextHunt = remainingHunts[0];
+          if (nextHunt) {
+            setActiveHuntId(nextHunt.id);
+            setHuntSettings(nextHunt.settings);
+            setSlots(nextHunt.slots);
+          } else {
+            setActiveHuntId('');
+            setHuntSettings(emptyHuntSettings);
+            setSlots([]);
+          }
+        }
+      } else {
+        setError('Hunt konnte nicht gelöscht werden.');
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to delete hunt:', error);
+      setError('Fehler beim Löschen des Hunts.');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  // Load hunts from API on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!activeHuntId) return;
-    const payload = JSON.stringify({
-      settings: huntSettings,
-      slots
-    });
-    window.localStorage.setItem(storageKeyForHunt(activeHuntId), payload);
-    setHunts((prev) =>
-      prev.map((hunt) =>
-        hunt.id === activeHuntId
-          ? {
-              ...hunt,
-              settings: huntSettings,
-              slots,
-              summary: slots.length
-                ? `${slots.length} Slots · ${huntSettings.startBalance || 0} ${
-                    huntSettings.currency
-                  } Startbalance`
-                : 'Noch keine Slots',
-              updatedAt: 'Gerade eben'
+    let isActive = true;
+    
+    const loadHunts = async () => {
+      setLoadError(null);
+      setIsLoading(true);
+      
+      try {
+        const response = await fetch('/api/bonus-hunt', {
+          cache: 'no-store'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Laden fehlgeschlagen');
+        }
+        
+        const data = await response.json();
+        const loadedHunts = data.hunts || [];
+        
+        if (!isActive) return;
+        
+        setHunts(loadedHunts);
+        
+        // Migrate localStorage data to DB if not already migrated
+        if (!hasMigratedRef.current && typeof window !== 'undefined') {
+          hasMigratedRef.current = true;
+          const keys = Object.keys(window.localStorage);
+          const huntKeys = keys.filter((key) => key.startsWith('livewidgets:bonus-hunt:'));
+          
+          for (const key of huntKeys) {
+            const huntId = key.replace('livewidgets:bonus-hunt:', '');
+            // Only migrate if hunt doesn't exist in DB
+            if (!loadedHunts.find((h: BonusHuntEntry) => h.id === huntId)) {
+              try {
+                const stored = window.localStorage.getItem(key);
+                if (stored) {
+                  const parsed = JSON.parse(stored) as {
+                    settings?: HuntSettings;
+                    slots?: BonusSlot[];
+                  };
+                  // Try to create in DB (will fail if not authenticated, which is fine)
+                  await fetch('/api/bonus-hunt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: parsed.settings?.title || `Migrated Hunt ${huntId}`,
+                      settings: parsed.settings || emptyHuntSettings,
+                      slots: parsed.slots || []
+                    })
+                  }).catch(() => {
+                    // Ignore errors during migration
+                  });
+                }
+              } catch {
+                // Ignore parse errors
+              }
             }
-          : hunt
-      )
+          }
+        }
+        
+        if (loadedHunts.length > 0 && !activeHuntId) {
+          setActiveHuntId(loadedHunts[0].id);
+          setHuntSettings(loadedHunts[0].settings);
+          setSlots(loadedHunts[0].slots);
+        }
+      } catch (error) {
+        console.error('Failed to load hunts:', error);
+        if (isActive) {
+          setLoadError('Die Bonus Hunts konnten nicht geladen werden. Bitte lade die Seite neu.');
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    loadHunts();
+    
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  // Debounced save to API
+  const saveHunt = useCallback(async () => {
+    if (!activeHuntId || isSaving || isLoading) return;
+    
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/bonus-hunt/${activeHuntId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: huntSettings.title,
+          settings: huntSettings,
+          slots,
+          status: hunts.find((h) => h.id === activeHuntId)?.status || 'prepared'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const updatedHunt = data.hunt;
+        setHunts((prev) =>
+          prev.map((hunt) =>
+            hunt.id === activeHuntId ? updatedHunt : hunt
+          )
+        );
+        setError(null);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Speichern fehlgeschlagen.');
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save hunt:', error);
+      setError('Fehler beim Speichern. Änderungen werden automatisch erneut versucht.');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [activeHuntId, huntSettings, slots, hunts, isSaving, isLoading]);
+
+  // Auto-save with debouncing
+  useEffect(() => {
+    if (!activeHuntId || isLoading) return;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveHunt();
+    }, 1000); // 1 second debounce
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [activeHuntId, huntSettings, slots, isLoading, saveHunt]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <p className="text-sm text-slate-400">Lade Bonus Hunts...</p>
+      </div>
     );
-  }, [activeHuntId, huntSettings, slots]);
+  }
+
+  if (loadError) {
+    return (
+      <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 p-6">
+        <p className="text-sm font-semibold text-rose-100">{loadError}</p>
+        <button
+          className="mt-4 rounded-xl border border-rose-400/40 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-white"
+          type="button"
+          onClick={() => window.location.reload()}
+        >
+          Seite neu laden
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
+      {error && (
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+          <p className="text-xs uppercase tracking-[0.3em] text-amber-200">
+            Hinweis
+          </p>
+          <p className="mt-2">{error}</p>
+        </div>
+      )}
+      
+      {isSaving && (
+        <div className="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-5 py-4 text-sm text-indigo-100">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+            <p>Speichere Änderungen...</p>
+          </div>
+        </div>
+      )}
+      
       <section className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -435,7 +537,14 @@ export default function BonusHuntClient({
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {hunts.map((hunt) => (
+          {hunts.length === 0 ? (
+            <div className="col-span-full rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-center">
+              <p className="text-sm text-slate-400">
+                Noch keine Bonus Hunts vorhanden. Erstelle deinen ersten Hunt!
+              </p>
+            </div>
+          ) : (
+            hunts.map((hunt) => (
             <button
               key={hunt.id}
               className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
@@ -477,7 +586,8 @@ export default function BonusHuntClient({
                 </span>
               </span>
             </button>
-          ))}
+            ))
+          )}
         </div>
       </section>
 

@@ -89,28 +89,36 @@ model ModeratorLink {
 }
 
 model BonusHunt {
-  id         String          @id @default(cuid())
-  channelId  String
-  channel    Channel         @relation(fields: [channelId], references: [id])
-  title      String
-  status     BonusHuntStatus @default(PENDING)
-  winAmount  Float?
-  multiplier Float?
-  items      BonusItem[]
-  guesses    Guess[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id           String          @id @default(cuid())
+  channelId    String
+  channel      Channel         @relation(fields: [channelId], references: [id])
+  title        String
+  status       BonusHuntStatus @default(PENDING)
+  winAmount    Float?
+  multiplier   Float?
+  startBalance Float?
+  targetCashout Float?
+  currency     String          @default("€")
+  items        BonusItem[]
+  guesses      Guess[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }
 
 model BonusItem {
-  id        String   @id @default(cuid())
-  huntId    String
-  hunt      BonusHunt @relation(fields: [huntId], references: [id])
-  slotName  String
-  bet       Float
-  buyCost   Float
-  type      String
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  huntId        String
+  hunt          BonusHunt @relation(fields: [huntId], references: [id])
+  slotName      String
+  provider      String?
+  bet           Float
+  buyCost       Float
+  type          String
+  targetSpins   Int?
+  collectedSpins Int?
+  status        String   @default("open")
+  payout        Float?
+  createdAt     DateTime @default(now())
 }
 
 model Guess {

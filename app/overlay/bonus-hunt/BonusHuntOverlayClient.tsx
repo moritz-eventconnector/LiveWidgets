@@ -5,68 +5,88 @@ import { useSearchParams } from 'next/navigation';
 
 const fallbackHunt = {
   currency: '€',
-  slots: [
-    { id: 'slot-1', name: 'Gronk’s Gems (2€)', payout: 10.2 },
-    { id: 'slot-2', name: 'Gates of Olympus (2€)', payout: 232.2 },
-    { id: 'slot-3', name: 'Razor Shark (2€)', payout: 520 },
-    { id: 'slot-4', name: 'Jammin’ Jars (2€)', payout: 92 },
-    { id: 'slot-5', name: 'Pearl Harbor (2€)', payout: 1230 },
-    { id: 'slot-6', name: 'Undead Fortune (2€)', payout: 23 },
-    { id: 'slot-7', name: 'Dinopolis (2€)', payout: 120 },
-    { id: 'slot-8', name: 'Wanted Dead or a Wild (2€)', payout: 840 }
-  ]
+  slots: []
 };
 
 const rotateIntervalMs = 3500;
 const visibleSlots = 6;
 
-const storageKeyForHunt = (huntId: string) =>
-  `livewidgets:bonus-hunt:${huntId}`;
-
 export default function BonusHuntOverlayClient() {
   const searchParams = useSearchParams();
   const huntId = searchParams.get('hunt') ?? 'default';
-  const [slots, setSlots] = useState(fallbackHunt.slots);
-  const [currency, setCurrency] = useState(fallbackHunt.currency);
+  const token = searchParams.get('token');
+  const [slots, setSlots] = useState<Array<{ id: string; name: string; payout: number }>>([]);
+  const [currency, setCurrency] = useState('€');
   const [offset, setOffset] = useState(0);
+  const [displayOffset, setDisplayOffset] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Load data from API
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem(storageKeyForHunt(huntId));
-    if (!stored) {
-      setSlots(fallbackHunt.slots);
-      setCurrency(fallbackHunt.currency);
+    if (!huntId || huntId === 'default' || !token) {
+      setIsLoading(false);
+      setSlots([]);
+      setCurrency('€');
       return;
     }
-    try {
-      const parsed = JSON.parse(stored) as {
-        settings?: { currency?: string };
-        slots?: { id?: string; name?: string; stake?: string; payout?: string }[];
-      };
-      const nextCurrency = parsed.settings?.currency ?? fallbackHunt.currency;
-      const mappedSlots =
-        parsed.slots?.map((slot, index) => {
-          const payout = Number(slot.payout ?? 0);
-          const stakeValue = Number(slot.stake ?? 0);
-          const stakeLabel = stakeValue
-            ? ` (${stakeValue.toFixed(2)}${nextCurrency})`
-            : '';
-          return {
-            id: slot.id ?? `slot-${index}`,
-            name: `${slot.name ?? 'Unbekannter Slot'}${stakeLabel}`,
-            payout
-          };
-        }) ?? [];
-      setCurrency(nextCurrency);
-      setSlots(mappedSlots.length ? mappedSlots : fallbackHunt.slots);
-    } catch {
-      setSlots(fallbackHunt.slots);
-      setCurrency(fallbackHunt.currency);
-    }
-  }, [huntId]);
 
+    let isActive = true;
+
+    const loadHunt = async () => {
+      try {
+        const url = `/api/bonus-hunt/overlay/${huntId}?token=${encodeURIComponent(token)}`;
+        const response = await fetch(url, { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (isActive) {
+            if (data.slots && data.slots.length > 0) {
+              setSlots(data.slots);
+              setCurrency(data.currency || '€');
+            } else {
+              setSlots([]);
+              setCurrency(data.currency || '€');
+            }
+            setIsLoading(false);
+          }
+        } else {
+          if (isActive) {
+            setSlots([]);
+            setCurrency('€');
+            setIsLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load hunt:', error);
+        if (isActive) {
+          setSlots([]);
+          setCurrency('€');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadHunt();
+    
+    // Poll for updates every 5 seconds
+    const pollInterval = setInterval(() => {
+      if (isActive) {
+        loadHunt();
+      }
+    }, 5000);
+    
+    return () => {
+      isActive = false;
+      clearInterval(pollInterval);
+    };
+  }, [huntId, token]);
+
+  // Smooth scrolling with animation
   useEffect(() => {
-    if (!slots.length) return;
+    if (!slots.length || slots.length <= visibleSlots) {
+      setDisplayOffset(0);
+      return;
+    }
+    
     const timer = window.setInterval(() => {
       setOffset((prev) => (prev + 1) % slots.length);
     }, rotateIntervalMs);
@@ -74,15 +94,52 @@ export default function BonusHuntOverlayClient() {
     return () => window.clearInterval(timer);
   }, [slots.length]);
 
+  // Smooth transition for display offset
+  useEffect(() => {
+    setDisplayOffset(offset);
+  }, [offset]);
+
   const visibleList = useMemo(() => {
     if (!slots.length) return [];
     const list = [];
     for (let index = 0; index < visibleSlots; index += 1) {
-      const slot = slots[(offset + index) % slots.length];
+      const slot = slots[(displayOffset + index) % slots.length];
       list.push(slot);
     }
     return list;
-  }, [offset, slots]);
+  }, [displayOffset, slots]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-end justify-end p-8">
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-950/85 px-5 py-4 shadow-2xl backdrop-blur">
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
+            <span>Bonus Hunt</span>
+            <span>{currency}</span>
+          </div>
+          <div className="mt-3 flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (slots.length === 0) {
+    return (
+      <div className="flex min-h-screen items-end justify-end p-8">
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-950/85 px-5 py-4 shadow-2xl backdrop-blur">
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
+            <span>Bonus Hunt</span>
+            <span>{currency}</span>
+          </div>
+          <div className="mt-3 text-sm text-slate-400">
+            Noch keine Slots vorhanden
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-end justify-end p-8">
@@ -91,18 +148,24 @@ export default function BonusHuntOverlayClient() {
           <span>Bonus Hunt</span>
           <span>{currency}</span>
         </div>
-        <div className="mt-3 space-y-2 text-sm">
+        <div className="mt-3 space-y-2 text-sm overflow-hidden">
           {visibleList.map((slot, index) => (
             <div
-              key={`${slot.id}-${offset}-${index}`}
-              className={`flex items-center justify-between ${
-                index === 0
-                  ? 'text-white'
-                  : 'text-slate-300/90'
-              }`}
+              key={`${slot.id}-${displayOffset}-${index}`}
+              className="flex items-center justify-between transition-all duration-700 ease-in-out"
+              style={{
+                opacity: index === 0 ? 1 : 0.9 - index * 0.1,
+                transform: `translateY(${index === 0 ? 0 : 2}px) scale(${1 - index * 0.02})`
+              }}
             >
-              <span className="truncate pr-4">{slot.name}</span>
-              <span className="min-w-[72px] text-right font-semibold">
+              <span className={`truncate pr-4 transition-colors duration-500 ${
+                index === 0 ? 'text-white' : 'text-slate-300/90'
+              }`}>
+                {slot.name}
+              </span>
+              <span className={`min-w-[72px] text-right font-semibold transition-colors duration-500 ${
+                index === 0 ? 'text-white' : 'text-slate-300/90'
+              }`}>
                 {slot.payout.toFixed(2)}
                 {currency}
               </span>
