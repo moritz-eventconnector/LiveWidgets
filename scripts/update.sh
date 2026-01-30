@@ -82,25 +82,56 @@ git pull
 
 if [[ "$clean_build" == true ]]; then
   echo "Running clean rebuild (no cache, force recreate containers)..."
+  echo "Stopping and removing containers..."
+  sudo docker compose down
+  
+  echo "Removing old build artifacts..."
   rm -rf .next node_modules
-  sudo docker compose build --no-cache
+  
+  echo "Removing Docker build cache..."
+  sudo docker compose build --no-cache --pull
+  
+  echo "Starting containers with force recreate..."
+  if sudo docker compose up --help | grep -q -- '--wait'; then
+    sudo docker compose up -d --wait --force-recreate --build
+  else
+    sudo docker compose up -d --force-recreate --build
+    echo "Waiting for containers to be ready..."
+    sleep 5
+  fi
 else
+  echo "Building containers..."
   sudo docker compose build
+  
+  if sudo docker compose up --help | grep -q -- '--wait'; then
+    sudo docker compose up -d --wait --build
+  else
+    sudo docker compose up -d --build
+    echo "Waiting for containers to be ready..."
+    sleep 5
+  fi
 fi
 
-if sudo docker compose up --help | grep -q -- '--wait'; then
-  if [[ "$clean_build" == true ]]; then
-    sudo docker compose up -d --wait --force-recreate
-  else
-    sudo docker compose up -d --wait
-  fi
-else
-  if [[ "$clean_build" == true ]]; then
-    sudo docker compose up -d --force-recreate
-  else
-    sudo docker compose up -d
-  fi
+echo "Verifying app container is running..."
+if ! sudo docker compose ps app | grep -q "Up"; then
+  echo "App container failed to start. Checking logs..." >&2
+  sudo docker compose logs --tail=50 app >&2
+  exit 1
 fi
+
+echo "Waiting for Next.js to be ready..."
+for attempt in {1..30}; do
+  if sudo docker compose exec -T app sh -c "test -f .next/server/app-paths-manifest.json" 2>/dev/null; then
+    echo "Next.js build verified."
+    break
+  fi
+  if [[ $attempt -eq 30 ]]; then
+    echo "Warning: Next.js build verification timeout. Container may still be starting." >&2
+  else
+    echo "Waiting for Next.js build (${attempt}/30)..."
+    sleep 2
+  fi
+done
 
 postgres_ready=false
 for attempt in {1..30}; do
@@ -166,4 +197,24 @@ else
   fi
 fi
 
+echo ""
+echo "Verifying critical routes are built..."
+if sudo docker compose exec -T app sh -c "test -f .next/server/app-paths-manifest.json" 2>/dev/null; then
+  echo "✓ Next.js build manifest found"
+  
+  # Check if bonus-hunts route exists (if it should)
+  if sudo docker compose exec -T app sh -c "grep -q 'bonus-hunts' .next/server/app-paths-manifest.json" 2>/dev/null; then
+    echo "✓ Bonus-hunts route found in build"
+  else
+    echo "⚠ Warning: Bonus-hunts route not found in build manifest"
+    echo "  This might be normal if the route was removed or renamed"
+  fi
+else
+  echo "⚠ Warning: Could not verify Next.js build"
+fi
+
+echo ""
 echo "Update complete."
+echo ""
+echo "If you're experiencing routing issues, try:"
+echo "  ./scripts/update.sh --clean"
